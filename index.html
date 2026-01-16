@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<!--
+  =============================================================
+  ✨ EDIT THESE SECTIONS ONLY FOR NEW DESIGNS ✨
+  =============================================================
+
+  1) <head> SOCIAL META TAGS
+     - og:title, og:description, og:image
+     - twitter:title, twitter:description, twitter:image
+     (These are what social platforms ACTUALLY read.)
+
+  2) CONFIG SECTION (right below the Social Preview tags)
+     - CONFIG.images        → background + scratch overlay
+     - CONFIG.social        → title, description, thumbnail
+     - CONFIG.fields        → AE X/Y positions + SAFE BOX sizes
+     - CONFIG.ui            → character counter + warnings
+
+  3) (Optional) Turn off debug mode before selling:
+     CONFIG.debug = false
+
+  🚫 You should NOT need to edit anything else below.
+  =============================================================
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Virtual Scratch Ticket</title>
+
+  <!-- Social Preview (STATIC snapshot for platforms) -->
+  <meta property="og:title" content="Virtual Scratch Ticket" id="ogTitle" />
+  <meta property="og:description" content="Scratch to reveal your surprise!" id="ogDesc" />
+  <meta property="og:image" content="https://i.imgur.com/GjmafAj.png" id="ogImage" />
+  <meta property="og:type" content="website" id="ogType" />
+
+  <meta name="twitter:card" content="summary_large_image" id="twCard" />
+  <meta name="twitter:title" content="Virtual Scratch Ticket" id="twTitle" />
+  <meta name="twitter:description" content="Scratch to reveal your surprise!" id="twDesc" />
+  <meta name="twitter:image" content="https://i.imgur.com/GjmafAj.png" id="twImage" />
+
+  <!-- ================= FONTS (one-time setup) ================= -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link id="googleFontsLink" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- ================= CONFIG (edit here) ================= -->
+  <script>
+    const CONFIG = {
+      debug: false,
+
+      // After Effects comp size
+      canvas: { width: 1080, height: 1920 },
+
+      images: {
+        // Put background.mp4 in the SAME GitHub folder as index.html
+        backgroundVideo: './background.mp4',
+        // (Optional) fallback still image / gif
+        backgroundFallback: 'https://i.imgur.com/8GqRmQz.gif',
+        scratchOverlay: 'https://i.imgur.com/gS7ln0x.png'
+      },
+
+      social: {
+        title: 'Virtual Scratch Ticket',
+        description: 'Scratch to reveal your surprise!',
+        image: 'https://i.imgur.com/GjmafAj.png',
+        ogType: 'website',
+        twitterCard: 'summary_large_image'
+      },
+
+      googleFontsHref: 'https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&display=swap',
+
+      fonts: {
+        slab: "'Alfa Slab One', 'Georgia', serif",
+        sans: "'Ropa Sans', 'Arial', sans-serif"
+      },
+      defaultFontKey: 'slab',
+
+      // UI behaviors
+      ui: {
+        // Message input max characters (also sets input maxlength)
+        messageMaxChars: 140,
+
+        // Show a warning if the MESSAGE font shrinks below this size (AE pixels)
+        warnMessageBelowFontSize: 14,
+
+        // Message line behavior
+        messageMaxLines: 2,
+        messageLineHeight: 1.15
+      },
+
+      // Fields are defined in AE PIXELS.
+      // x/y = CENTER of the safe box.
+      // boxWidth/boxHeight = safe box size.
+      // fontSize = starting font size in AE px (will scale to device).
+      fields: {
+        message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
+        name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
+      },
+
+      // Minimum font sizes (AE px). Auto-shrink will not go below these.
+      minFontSize: {
+        message: 14,
+        name: 14,
+        artist: 14,
+        venue: 14,
+        date: 14
+      },
+
+      scratch: {
+        // Brush size in AE pixels (scaled automatically to the device)
+        brushSize: 120,
+
+        // 'stroke' = smooth continuous brush (recommended)
+        // 'circle' = stamp circles (old behavior)
+        brushMode: 'stroke'
+      },
+
+      // IMPORTANT: The generated link will only work if this HTML is hosted at a real URL.
+      // When you're previewing inside ChatGPT/Canvas, window.location.href may be a temporary/internal URL.
+      // Set this to your hosted page URL (GitHub Pages / Netlify / etc.) so the generated link works anywhere.
+      share: {
+        baseUrl: ''
+      }
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', 'Arial', sans-serif;
+      background: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      /* Prevent accidental page scroll on desktop */
+      overflow: hidden;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      /* Keep everything visible without scrolling */
+      max-height: 95vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* ---------- EDITOR ---------- */
+    /* ---------- EDITOR (Soft & Friendly) ---------- */
+    .editor { display: none; }
+    .editor.active { display: block; }
+
+    .editor h2 {
+      text-align: center;
+      margin-bottom: 12px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #333;
+    }
+
+    .editor p {
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 16px;
+      color: #666;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.4;
+    }
+
+    .editor input {
+      width: 100%;
+      padding: 14px 14px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .editor input::placeholder {
+      color: #aaa;
+    }
+
+    .editor input:focus {
+      outline: none;
+      border-color: #e8c9a8;
+      box-shadow: 0 0 0 3px rgba(232, 201, 168, 0.25);
+    }
+
+    .editor button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #f3d6b6, #f0caa0);
+      color: #4a3b2a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .editor button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    }
+
+    .editor button:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    /* (Optional) helper + warning styles removed to keep the editor clean */
+
+    /* ---------- CARD ---------- */
+    .card-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      display: none;
+      overflow: hidden;
+      /* Fit on screen */
+      max-height: 78vh;
+      flex: 1;
+      min-height: 0;
+      margin: 0 auto;
+    }
+
+    .card-wrapper.active { display: block; }
+
+    .background-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .text-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+
+    .text {
+      position: absolute;
+      color: #111;
+      word-wrap: break-word;
+      overflow: hidden;
+      text-shadow: none;
+    }
+
+    /* Debug overlay */
+    body.debug .text { outline: 1px dashed rgba(255,0,0,0.8); background: rgba(255,0,0,0.08); }
+    body.debug #tName { outline-color:#007bff; background:rgba(0,123,255,0.08); }
+    body.debug #tEvent { outline-color:#28a745; background:rgba(40,167,69,0.08); }
+    body.debug #tArtist { outline-color:#ffc107; background:rgba(255,193,7,0.08); }
+    body.debug #tVenue { outline-color:#6f42c1; background:rgba(111,66,193,0.08); }
+    body.debug #tDate { outline-color:#dc3545; background:rgba(220,53,69,0.08); }
+
+    canvas {
+      position: absolute;
+      /* NOTE: We size/position the canvas in JS to match the *contained* image area */
+      touch-action: none;
+      z-index: 2;
+    }
+
+    .actions { margin-top: 10px; display: none; flex-shrink: 0; }
+    .actions button { width:100%; padding:12px; font-size:15px; margin-bottom:8px; }
+
+    .link-box {
+      word-break: break-all;
+      font-size: 13px;
+      background: #fbf6ef;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.08);
+      font-family: 'Inter', 'Arial', sans-serif;
+      color: #4a3b2a;
+    }
+
+    .instructions {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 10px;
+      color: #6b5a46;
+      font-family: 'Inter', 'Arial', sans-serif;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- EDITOR -->
+    <div class="editor" id="editor">
+      <h2>Customize Your Ticket</h2>
+      <p>Fill in the details below. You’ll preview your ticket before generating a shareable link.</p>
+
+      <input id="nameInput" placeholder="Recipient Name" maxlength="40" />
+
+      <input id="messageInput" placeholder="Message (Type your custom message here)" />
+
+      <!-- Hidden helper elements (kept for logic; not shown to buyers) -->
+      <div id="messageHelper" style="display:none"></div>
+      <div id="messageCounter" style="font-size:12px;color:#777;margin:-6px 0 10px;text-align:right">0/140</div>
+      <div class="warning" id="messageWarning" style="display:none"></div>
+
+      <input id="artistInput" placeholder="Artist" maxlength="40" />
+      <input id="venueInput" placeholder="Venue" maxlength="50" />
+      <input id="dateInput" placeholder="Date" maxlength="30" />
+
+      <button id="previewBtn" type="button">Preview Ticket</button>
+
+      
+    </div>
+
+    <!-- CARD -->
+    <div class="card-wrapper" id="card">
+      <video
+        id="bgVideo"
+        class="background-image"
+        autoplay
+        loop
+        muted
+        playsinline
+        preload="auto"
+      >
+        <source src="./background.mp4" type="video/mp4">
+        <!-- Optional fallback if video can't load -->
+        <img id="bgImg" src="https://i.imgur.com/8GqRmQz.gif" class="background-image" alt="Scratch ticket" />
+      </video>
+
+      <div class="text-layer">
+        <div class="text" id="tName"></div>
+        <div class="text" id="tEvent"></div>
+        <div class="text" id="tArtist"></div>
+        <div class="text" id="tVenue"></div>
+        <div class="text" id="tDate"></div>
+      </div>
+
+      <canvas id="scratchCanvas" style="display:none;"></canvas>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="actions" id="actions">
+      <button id="backBtn" type="button">← Back to Edit</button>
+      <button id="generateBtn" type="button">Generate Shareable Link</button>
+      <div class="link-box" id="linkBox"></div>
+      <div class="warning" id="messageWarningPreview" style="display:none"></div>
+    </div>
+
+    <div class="instructions" id="instructions"></div>
+  </div>
+
+  <!-- ================= APP LOGIC (do not edit) ================= -->
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const isReveal = params.get('mode') === 'reveal';
+
+    const editor = document.getElementById('editor');
+    const card = document.getElementById('card');
+    const actions = document.getElementById('actions');
+    const instructions = document.getElementById('instructions');
+    const bgVideo = document.getElementById('bgVideo');
+    const bgImg = document.getElementById('bgImg');
+    const bgMedia = bgVideo || bgImg;
+    const scratchCanvas = document.getElementById('scratchCanvas');
+
+    const messageCounter = document.getElementById('messageCounter');
+    const messageHelper = document.getElementById('messageHelper');
+    const messageWarning = document.getElementById('messageWarning');
+    const messageWarningPreview = document.getElementById('messageWarningPreview');
+
+    const inputs = {
+      name: document.getElementById('nameInput'),
+      message: document.getElementById('messageInput'),
+      artist: document.getElementById('artistInput'),
+      venue: document.getElementById('venueInput'),
+      date: document.getElementById('dateInput')
+    };
+
+    const fields = {
+      name: document.getElementById('tName'),
+      message: document.getElementById('tEvent'),
+      artist: document.getElementById('tArtist'),
+      venue: document.getElementById('tVenue'),
+      date: document.getElementById('tDate')
+    };
+
+    const state = { name: '', message: '', artist: '', venue: '', date: '' };
+
+    let lastScale = 1; // current scale of the rendered ticket relative to AE pixels
+
+    function setDebugMode(on) {
+      document.body.classList.toggle('debug', !!on);
+    }
+
+    function setMeta(id, value) {
+      const el = document.getElementById(id);
+      if (el && value) el.setAttribute('content', value);
+    }
+
+    function applySocialMetaFromConfig() {
+      if (CONFIG.social?.title) document.title = CONFIG.social.title;
+      setMeta('ogTitle', CONFIG.social?.title);
+      setMeta('ogDesc', CONFIG.social?.description);
+      setMeta('ogImage', CONFIG.social?.image);
+      setMeta('ogType', CONFIG.social?.ogType);
+      setMeta('twCard', CONFIG.social?.twitterCard);
+      setMeta('twTitle', CONFIG.social?.title);
+      setMeta('twDesc', CONFIG.social?.description);
+      setMeta('twImage', CONFIG.social?.image);
+    }
+
+    // ---- Fonts ----
+    function ensureGoogleFontsLink() {
+      const link = document.getElementById('googleFontsLink');
+      if (!link) return;
+      if (CONFIG.googleFontsHref && link.getAttribute('href') !== CONFIG.googleFontsHref) {
+        link.setAttribute('href', CONFIG.googleFontsHref);
+      }
+    }
+
+    // ---- Layout ----
+    function applyFieldLayout() {
+      // Also positions the scratch canvas to match the *visible* (object-fit:contain) image area.
+      const wrapRect = card.getBoundingClientRect();
+      const wrapW = wrapRect.width;
+      const wrapH = wrapRect.height;
+
+      const natW = (bgMedia && (bgMedia.videoWidth || bgMedia.naturalWidth)) || CONFIG.canvas.width;
+      const natH = (bgMedia && (bgMedia.videoHeight || bgMedia.naturalHeight)) || CONFIG.canvas.height;
+
+      const scale = Math.min(wrapW / natW, wrapH / natH);
+      lastScale = scale;
+
+      const contentW = natW * scale;
+      const contentH = natH * scale;
+      const offsetX = (wrapW - contentW) / 2;
+      const offsetY = (wrapH - contentH) / 2;
+
+      // --- Match scratch canvas to the contained image area (prevents distortion) ---
+      scratchCanvas.style.left = offsetX + 'px';
+      scratchCanvas.style.top = offsetY + 'px';
+      scratchCanvas.style.width = contentW + 'px';
+      scratchCanvas.style.height = contentH + 'px';
+
+      for (const key in CONFIG.fields) {
+        const cfg = CONFIG.fields[key];
+        const el = fields[key];
+        if (!el) continue;
+
+        const boxW = Number(cfg.boxWidth ?? 0);
+        const boxH = Number(cfg.boxHeight ?? 0);
+
+        // Position (px)
+        el.style.left = (offsetX + (cfg.x * scale)) + 'px';
+        el.style.top  = (offsetY + (cfg.y * scale)) + 'px';
+        el.style.transform = 'translate(-50%, -50%)';
+
+        // Safe box size (px)
+        if (boxW) el.style.width  = (boxW * scale) + 'px';
+        if (boxH) el.style.height = (boxH * scale) + 'px';
+
+        // Typography
+        const fontKey = cfg.fontKey || CONFIG.defaultFontKey;
+        el.style.fontFamily = (CONFIG.fonts && CONFIG.fonts[fontKey]) ? CONFIG.fonts[fontKey] : 'Arial, sans-serif';
+
+        // IMPORTANT: scale font size from AE px -> device px
+        el.style.fontSize = (cfg.fontSize * scale) + 'px';
+        el.style.fontWeight = String(cfg.fontWeight ?? 400);
+        el.style.textAlign = cfg.align || 'center';
+
+        // Default centering behavior
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = (el.style.textAlign === 'left')
+          ? 'flex-start'
+          : (el.style.textAlign === 'right')
+            ? 'flex-end'
+            : 'center';
+
+        // MESSAGE special rules: max lines + line height
+        if (key === 'message') {
+          const lh = Number(CONFIG.ui?.messageLineHeight || 1.15);
+          el.style.lineHeight = lh;
+
+          // line clamp + shrink-to-fit behavior:
+          // if text wants more than maxLines, it will shrink until it naturally fits.
+          const maxLines = Number(CONFIG.ui?.messageMaxLines || 2);
+          el.style.display = '-webkit-box';
+          el.style.webkitBoxOrient = 'vertical';
+          el.style.webkitLineClamp = String(maxLines);
+          el.style.overflow = 'hidden';
+        } else {
+          el.style.lineHeight = 'normal';
+          el.style.webkitLineClamp = '';
+          el.style.webkitBoxOrient = '';
+        }
+      }
+    }
+
+    function resetTextStyles() {
+      for (const key in CONFIG.fields) {
+        const el = fields[key];
+        const cfg = CONFIG.fields[key];
+        if (!el || !cfg) continue;
+        el.style.fontSize = (cfg.fontSize * lastScale) + 'px';
+      }
+    }
+
+    function autoShrink(el, minSizeAe) {
+      if (!el) return;
+
+      const maxHeight = el.offsetHeight;
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      const min = Math.max(8, Number(minSizeAe || 10) * lastScale);
+
+      if (!maxHeight) return;
+
+      // Safety limit to avoid infinite loops
+      let guard = 250;
+
+      while ((el.scrollHeight > maxHeight || el.scrollWidth > el.offsetWidth) && size > min && guard-- > 0) {
+        size -= 1;
+        el.style.fontSize = size + 'px';
+      }
+    }
+
+    function applyAutoShrinkAll() {
+      for (const key in fields) {
+        autoShrink(fields[key], CONFIG.minFontSize[key]);
+      }
+    }
+
+    function getMessageFontSizeAe() {
+      const el = fields.message;
+      if (!el) return null;
+      const px = parseFloat(getComputedStyle(el).fontSize);
+      if (!Number.isFinite(px) || !lastScale) return null;
+      return px / lastScale;
+    }
+
+    function updateMessageWarning() {
+      const warnBelow = Number(CONFIG.ui?.warnMessageBelowFontSize || 0);
+      const sizeAe = getMessageFontSizeAe();
+      const show = (sizeAe !== null) && warnBelow > 0 && sizeAe < warnBelow;
+
+      const msg = show
+        ? `Your message is a bit long — it shrunk to about ${sizeAe.toFixed(1)}px (AE). Consider shortening it for best readability.`
+        : '';
+
+      // Editor warning
+      if (messageWarning) {
+        messageWarning.textContent = msg;
+        messageWarning.style.display = show ? 'block' : 'none';
+      }
+
+      // Preview warning
+      if (messageWarningPreview) {
+        messageWarningPreview.textContent = msg;
+        messageWarningPreview.style.display = show ? 'block' : 'none';
+      }
+    }
+
+    function applyStateToFields() {
+      resetTextStyles();
+      for (const key in fields) {
+        fields[key].textContent = state[key] || '';
+      }
+      applyAutoShrinkAll();
+      updateMessageWarning();
+    }
+
+    // ---- State ----
+    function pullInputsToState() {
+      for (const key in inputs) {
+        state[key] = (inputs[key].value || '').trim();
+      }
+    }
+
+    function pushStateToInputs() {
+      for (const key in inputs) {
+        inputs[key].value = state[key] || '';
+      }
+      updateMessageCounter();
+    }
+
+    function loadStateFromParams() {
+      for (const key in state) {
+        state[key] = (params.get(key) || '').trim();
+      }
+    }
+
+    // ---- Message counter + limit ----
+    function applyMessageMaxChars() {
+      const max = Number(CONFIG.ui?.messageMaxChars || 120);
+      inputs.message.maxLength = max;
+      updateMessageCounter();
+    }
+
+    function updateMessageCounter() {
+      const max = Number(inputs.message.maxLength || CONFIG.ui?.messageMaxChars || 120);
+      const len = (inputs.message.value || '').length;
+      if (messageCounter) messageCounter.textContent = `${len}/${max}`;
+
+      if (messageHelper) {
+        const lines = Number(CONFIG.ui?.messageMaxLines || 2);
+        messageHelper.textContent = `Max ${lines} lines • Auto-shrinks`;
+      }
+    }
+
+    // ---- Views ----
+    function showEditor() {
+      card.classList.remove('active');
+      actions.style.display = 'none';
+      editor.style.display = 'block';
+      instructions.textContent = '';
+      scratchCanvas.style.display = 'none';
+      if (messageWarningPreview) messageWarningPreview.style.display = 'none';
+    }
+
+    function showPreview() {
+      editor.style.display = 'none';
+      card.classList.add('active');
+      actions.style.display = 'block';
+      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap “Back to Edit” to fix it.'
+      scratchCanvas.style.display = 'none';
+
+      requestAnimationFrame(() => {
+        applyFieldLayout();
+        applyStateToFields();
+      });
+    }
+
+    function showReveal() {
+      editor.style.display = 'none';
+      actions.style.display = 'none';
+      card.classList.add('active');
+      instructions.textContent = '✨ Scratch to reveal your surprise! ✨'
+      scratchCanvas.style.display = 'block';
+
+      requestAnimationFrame(() => {
+        applyFieldLayout();
+        applyStateToFields();
+      });
+    }
+
+    // ---- Scratch ----
+    function initScratch(enabled) {
+      if (!enabled) return;
+
+      const canvas = scratchCanvas;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const overlay = new Image();
+      overlay.crossOrigin = 'anonymous';
+      overlay.src = CONFIG.images.scratchOverlay;
+
+      // Prevent multiple listeners if initScratch is ever called again
+      canvas.onpointerdown = null;
+      canvas.onpointerup = null;
+      canvas.onpointerleave = null;
+      canvas.onpointermove = null;
+
+      overlay.onload = () => {
+        canvas.width = overlay.width;
+        canvas.height = overlay.height;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(overlay, 0, 0);
+      };
+
+      let scratching = false;
+      let last = null;
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY
+        };
+      }
+
+      function eraseCircle(pos) {
+        const r = (Number(CONFIG.scratch?.brushSize || 120) * lastScale) / lastScale; // keep in canvas px terms below
+        // Convert AE px to canvas px (overlay is authored at AE size)
+        const radius = Number(CONFIG.scratch?.brushSize || 120) / 2;
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function eraseStroke(pos) {
+        const size = Number(CONFIG.scratch?.brushSize || 120);
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (!last) {
+          // Start stroke with a tiny segment so taps erase too
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+          ctx.lineTo(pos.x + 0.01, pos.y + 0.01);
+          ctx.stroke();
+          last = pos;
+          return;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(last.x, last.y);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        last = pos;
+      }
+
+      function eraseAt(e) {
+        const pos = getPos(e);
+        const mode = (CONFIG.scratch?.brushMode || 'stroke').toLowerCase();
+        if (mode === 'circle') eraseCircle(pos);
+        else eraseStroke(pos);
+      }
+
+      canvas.onpointerdown = (e) => {
+        scratching = true;
+        last = null;
+        eraseAt(e);
+      };
+
+      canvas.onpointerup = () => {
+        scratching = false;
+        last = null;
+      };
+
+      canvas.onpointerleave = () => {
+        scratching = false;
+        last = null;
+      };
+
+      canvas.onpointermove = (e) => {
+        if (!scratching) return;
+        eraseAt(e);
+      };
+    }
+
+    // ---- Self-tests (console) ----
+    function runSelfTests() {
+      try {
+        console.assert(typeof CONFIG === 'object', 'CONFIG should exist');
+        console.assert(CONFIG.canvas?.width > 0 && CONFIG.canvas?.height > 0, 'CONFIG.canvas must be positive');
+        console.assert(!!inputs.message, 'Message input should exist');
+        console.assert(!!fields.message, 'Message field (#tEvent) should exist');
+
+        for (const key in CONFIG.fields) {
+          console.assert(!!fields[key], `Missing DOM element for field: ${key}`);
+          console.assert(Number.isFinite(CONFIG.fields[key].x) && Number.isFinite(CONFIG.fields[key].y), `Field ${key} needs numeric x/y`);
+          console.assert(Number.isFinite(CONFIG.fields[key].boxWidth) && Number.isFinite(CONFIG.fields[key].boxHeight), `Field ${key} needs numeric boxWidth/boxHeight`);
+          console.assert(Number.isFinite(CONFIG.fields[key].fontSize), `Field ${key} needs numeric fontSize`);
+        }
+
+        console.assert(Number.isFinite(CONFIG.ui?.messageMaxChars), 'CONFIG.ui.messageMaxChars should be numeric');
+        console.assert(Number.isFinite(CONFIG.ui?.messageMaxLines), 'CONFIG.ui.messageMaxLines should be numeric');
+      } catch (e) {
+        console.error('Self-tests failed:', e);
+      }
+    }
+
+    (function boot() {
+      // Images
+      // Background media is loaded via <video> source (or <img> fallback)
+      if (bgVideo) {
+        const srcEl = bgVideo.querySelector('source');
+        if (srcEl) srcEl.src = CONFIG.images.backgroundVideo;
+        // Re-load after updating src
+        bgVideo.load();
+      }
+      if (bgImg) {
+        bgImg.src = CONFIG.images.backgroundFallback;
+      }
+
+      // Meta convenience
+      applySocialMetaFromConfig();
+
+      // Fonts
+      ensureGoogleFontsLink();
+      if (CONFIG.fonts && CONFIG.fonts[CONFIG.defaultFontKey]) {
+        document.body.style.fontFamily = CONFIG.fonts[CONFIG.defaultFontKey];
+      }
+
+      // Message UI
+      applyMessageMaxChars();
+      inputs.message.addEventListener('input', () => {
+        updateMessageCounter();
+        // Live-preview warning while typing (based on current preview text size if visible)
+        if (card.classList.contains('active')) {
+          pullInputsToState();
+          applyStateToFields();
+        }
+      });
+
+      // Layout now, after image load, and on resize
+      applyFieldLayout();
+      // Layout after media is ready
+      if (bgVideo) {
+        bgVideo.onloadedmetadata = () => {
+          requestAnimationFrame(() => {
+            applyFieldLayout();
+            if (card.classList.contains('active')) applyStateToFields();
+          });
+        };
+      }
+
+      if (bgImg) bgImg.onload = () => {
+        requestAnimationFrame(() => {
+          applyFieldLayout();
+          if (card.classList.contains('active')) applyStateToFields();
+        });
+      };
+      window.addEventListener('resize', () => {
+        applyFieldLayout();
+        if (card.classList.contains('active')) applyStateToFields();
+      });
+
+      // Debug on edit/preview only
+      setDebugMode(!isReveal && CONFIG.debug);
+
+      if (isReveal) {
+        loadStateFromParams();
+        applyStateToFields();
+        showReveal();
+        initScratch(true);
+      } else {
+        editor.classList.add('active');
+        showEditor();
+      }
+
+      // Buttons
+      document.getElementById('previewBtn').onclick = () => {
+        pullInputsToState();
+        showPreview();
+      };
+
+      document.getElementById('backBtn').onclick = () => {
+        pushStateToInputs();
+        showEditor();
+      };
+
+      document.getElementById('generateBtn').onclick = () => {
+        const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
+          ? CONFIG.share.baseUrl.trim()
+          : window.location.href;
+
+        const url = new URL(base);
+        url.searchParams.set('mode', 'reveal');
+        for (const key in state) url.searchParams.set(key, state[key] || '');
+        document.getElementById('linkBox').textContent = url.toString();
+      };
+
+      runSelfTests();
+    })();
+  </script>
+</body>
+</html>
