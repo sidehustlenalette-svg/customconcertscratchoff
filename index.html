@@ -134,7 +134,7 @@
 
       // Bump this when you change any hosted asset URLs (scratch overlay, background fallback, etc.)
       // Helps defeat aggressive browser/GitHub caching.
-      assetsVersion: 'v5'
+      assetsVersion: 'v2'
     };
   </script>
 
@@ -409,8 +409,23 @@
 
     // Encode/decode state to keep URLs short + hide spoilers
     function encodeState(obj) {
+      // Compact + URL-safe encoding to keep links shorter and avoid '+'/'/' issues.
+      // We also use short keys so the encoded payload is smaller.
       try {
-        return btoa(encodeURIComponent(JSON.stringify(obj)));
+        const compact = {
+          n: obj.name || '',
+          m: obj.message || '',
+          a: obj.artist || '',
+          v: obj.venue || '',
+          d: obj.date || ''
+        };
+        // Drop empty keys for even shorter links
+        Object.keys(compact).forEach(k => { if (!compact[k]) delete compact[k]; });
+
+        const json = JSON.stringify(compact);
+        const b64 = btoa(unescape(encodeURIComponent(json)));
+        // base64url
+        return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
       } catch (e) {
         return '';
       }
@@ -418,10 +433,26 @@
 
     function decodeState(str) {
       try {
-        return JSON.parse(decodeURIComponent(atob(str)));
+        // base64url -> base64
+        let b64 = (str || '').replace(/-/g, '+').replace(/_/g, '/');
+        // pad
+        while (b64.length % 4) b64 += '=';
+
+        const json = decodeURIComponent(escape(atob(b64)));
+        const compact = JSON.parse(json);
+        if (!compact || typeof compact !== 'object') return null;
+
+        return {
+          name: compact.n || '',
+          message: compact.m || '',
+          artist: compact.a || '',
+          venue: compact.v || '',
+          date: compact.d || ''
+        };
       } catch (e) {
         return null;
       }
+    }
     }
 
     let lastScale = 1; // current scale of the rendered ticket relative to AE pixels
