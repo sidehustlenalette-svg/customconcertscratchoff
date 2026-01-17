@@ -56,7 +56,7 @@
         backgroundVideo: './background.mp4',
         // (Optional) fallback still image / gif
         backgroundFallback: 'https://i.imgur.com/8GqRmQz.gif',
-        scratchOverlay: 'https://i.imgur.com/MKi32hJ.png'
+        scratchOverlay: 'https://i.imgur.com/gS7ln0x.png'
       },
 
       social: {
@@ -98,8 +98,8 @@
         message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
         name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
         artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 50, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 50, fontWeight: 400, align: 'center', fontKey: 'slab' }
+        venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
       },
 
       // Minimum font sizes (AE px). Auto-shrink will not go below these.
@@ -134,7 +134,7 @@
 
       // Bump this when you change any hosted asset URLs (scratch overlay, background fallback, etc.)
       // Helps defeat aggressive browser/GitHub caching.
-      assetsVersion: 'v2'
+      assetsVersion: 'v1'
     };
   </script>
 
@@ -407,6 +407,23 @@
 
     const state = { name: '', message: '', artist: '', venue: '', date: '' };
 
+    // Encode/decode state to keep URLs short + hide spoilers
+    function encodeState(obj) {
+      try {
+        return btoa(encodeURIComponent(JSON.stringify(obj)));
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function decodeState(str) {
+      try {
+        return JSON.parse(decodeURIComponent(atob(str)));
+      } catch (e) {
+        return null;
+      }
+    }
+
     let lastScale = 1; // current scale of the rendered ticket relative to AE pixels
 
     function setDebugMode(on) {
@@ -579,9 +596,20 @@
     }
 
     function loadStateFromParams() {
+      const packed = params.get('d');
+      if (packed) {
+        const decoded = decodeState(packed);
+        if (decoded && typeof decoded === 'object') {
+          Object.assign(state, decoded);
+          return;
+        }
+      }
+
+      // Fallback (older links)
       for (const key in state) {
         state[key] = (params.get(key) || '').trim();
       }
+    }
     }
 
     // ---- Message counter + limit ----
@@ -840,14 +868,15 @@
 
         const url = new URL(base);
         url.searchParams.set('mode', 'reveal');
-        for (const key in state) url.searchParams.set(key, state[key] || '');
+
+        // Pack ALL text into a single encoded param (short + spoiler-safe)
+        const packed = encodeState(state);
+        if (packed) url.searchParams.set('d', packed);
 
         const linkBox = document.getElementById('linkBox');
         linkBox.textContent = url.toString();
 
-        // Long links can change the actions height and shrink the card.
-        // Recompute layout so text stays aligned in preview.
-        // Recompute layout AFTER the link box has reflowed.
+        // Recompute layout after link appears
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             applyFieldLayout();
