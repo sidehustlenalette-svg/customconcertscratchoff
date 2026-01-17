@@ -67,8 +67,10 @@
         twitterCard: 'summary_large_image'
       },
 
-      googleFontsHref: 'https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&display=swap',
+      // If you ever change the font families, update this href to match.
+      googleFontsHref: 'https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap',
 
+      // Font keys you can apply per field
       fonts: {
         slab: "'Alfa Slab One', 'Georgia', serif",
         sans: "'Ropa Sans', 'Arial', sans-serif"
@@ -110,17 +112,16 @@
       },
 
       scratch: {
-        // Brush size in AE pixels (scaled automatically to the device)
+        // Brush size in AE pixels (overlay is authored at AE size)
         brushSize: 120,
 
         // 'stroke' = smooth continuous brush (recommended)
-        // 'circle' = stamp circles (old behavior)
+        // 'circle' = stamp circles
         brushMode: 'stroke'
       },
 
-      // IMPORTANT: The generated link will only work if this HTML is hosted at a real URL.
-      // When you're previewing inside ChatGPT/Canvas, window.location.href may be a temporary/internal URL.
       // Set this to your hosted page URL (GitHub Pages / Netlify / etc.) so the generated link works anywhere.
+      // Example: 'https://YOURUSERNAME.github.io/YOUR_REPO_NAME/'
       share: {
         baseUrl: ''
       },
@@ -156,7 +157,6 @@
       justify-content: center;
     }
 
-    /* ---------- EDITOR ---------- */
     /* ---------- EDITOR (Soft & Friendly) ---------- */
     .editor { display: none; }
     .editor.active { display: block; }
@@ -164,7 +164,6 @@
     .editor h2 {
       text-align: center;
       margin-bottom: 12px;
-      font-family: 'Inter', sans-serif;
       font-weight: 600;
       letter-spacing: -0.01em;
       color: #333;
@@ -175,7 +174,6 @@
       text-align: center;
       margin-bottom: 16px;
       color: #666;
-      font-family: 'Inter', sans-serif;
       line-height: 1.4;
     }
 
@@ -184,16 +182,13 @@
       padding: 14px 14px;
       margin-bottom: 12px;
       font-size: 15px;
-      font-family: 'Inter', sans-serif;
       border-radius: 10px;
       border: 1px solid #ddd;
       background: #fff;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .editor input::placeholder {
-      color: #aaa;
-    }
+    .editor input::placeholder { color: #aaa; }
 
     .editor input:focus {
       outline: none;
@@ -205,7 +200,6 @@
       width: 100%;
       padding: 14px;
       font-size: 16px;
-      font-family: 'Inter', sans-serif;
       font-weight: 600;
       cursor: pointer;
       border-radius: 12px;
@@ -225,7 +219,13 @@
       transform: translateY(0);
       box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     }
-    /* (Optional) helper + warning styles removed to keep the editor clean */
+
+    #messageCounter {
+      font-size: 12px;
+      color: #777;
+      margin: -6px 0 10px;
+      text-align: right;
+    }
 
     /* ---------- CARD ---------- */
     .card-wrapper {
@@ -253,7 +253,12 @@
       z-index: 0;
     }
 
-    .text-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+    .text-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
 
     .text {
       position: absolute;
@@ -273,7 +278,7 @@
 
     canvas {
       position: absolute;
-      /* NOTE: We size/position the canvas in JS to match the *contained* image area */
+      /* NOTE: We size/position the canvas in JS to match the *contained* media area */
       touch-action: none;
       z-index: 2;
     }
@@ -300,7 +305,6 @@
       font-size: 14px;
       margin-top: 10px;
       color: #6b5a46;
-      font-family: 'Inter', 'Arial', sans-serif;
       line-height: 1.4;
       flex-shrink: 0;
     }
@@ -317,19 +321,13 @@
       <input id="nameInput" placeholder="Recipient Name" maxlength="40" />
 
       <input id="messageInput" placeholder="Message (Type your custom message here)" />
-
-      <!-- Hidden helper elements (kept for logic; not shown to buyers) -->
-      <div id="messageHelper" style="display:none"></div>
-      <div id="messageCounter" style="font-size:12px;color:#777;margin:-6px 0 10px;text-align:right">0/140</div>
-      <div class="warning" id="messageWarning" style="display:none"></div>
+      <div id="messageCounter">0/140</div>
 
       <input id="artistInput" placeholder="Artist" maxlength="40" />
       <input id="venueInput" placeholder="Venue" maxlength="50" />
       <input id="dateInput" placeholder="Date" maxlength="30" />
 
       <button id="previewBtn" type="button">Preview Ticket</button>
-
-      
     </div>
 
     <!-- CARD -->
@@ -364,7 +362,6 @@
       <button id="backBtn" type="button">← Back to Edit</button>
       <button id="generateBtn" type="button">Generate Shareable Link</button>
       <div class="link-box" id="linkBox"></div>
-      <div class="warning" id="messageWarningPreview" style="display:none"></div>
     </div>
 
     <div class="instructions" id="instructions"></div>
@@ -385,9 +382,6 @@
     const scratchCanvas = document.getElementById('scratchCanvas');
 
     const messageCounter = document.getElementById('messageCounter');
-    const messageHelper = document.getElementById('messageHelper');
-    const messageWarning = document.getElementById('messageWarning');
-    const messageWarningPreview = document.getElementById('messageWarningPreview');
 
     const inputs = {
       name: document.getElementById('nameInput'),
@@ -439,9 +433,16 @@
       }
     }
 
+    function withCacheBust(url) {
+      if (!url) return url;
+      const v = (CONFIG.assetsVersion || '').trim();
+      if (!v) return url;
+      return url + (url.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(v);
+    }
+
     // ---- Layout ----
     function applyFieldLayout() {
-      // Also positions the scratch canvas to match the *visible* (object-fit:contain) image area.
+      // Also positions the scratch canvas to match the *visible* (object-fit:contain) media area.
       const wrapRect = card.getBoundingClientRect();
       const wrapW = wrapRect.width;
       const wrapH = wrapRect.height;
@@ -457,7 +458,7 @@
       const offsetX = (wrapW - contentW) / 2;
       const offsetY = (wrapH - contentH) / 2;
 
-      // --- Match scratch canvas to the contained image area (prevents distortion) ---
+      // --- Match scratch canvas to the contained area (prevents distortion) ---
       scratchCanvas.style.left = offsetX + 'px';
       scratchCanvas.style.top = offsetY + 'px';
       scratchCanvas.style.width = contentW + 'px';
@@ -489,7 +490,7 @@
         el.style.fontWeight = String(cfg.fontWeight ?? 400);
         el.style.textAlign = cfg.align || 'center';
 
-        // Default centering behavior
+        // Center vertically/horizontally in the safe box
         el.style.display = 'flex';
         el.style.alignItems = 'center';
         el.style.justifyContent = (el.style.textAlign === 'left')
@@ -498,13 +499,11 @@
             ? 'flex-end'
             : 'center';
 
-        // MESSAGE special rules: max lines + line height
+        // MESSAGE: 2-line clamp + line height
         if (key === 'message') {
           const lh = Number(CONFIG.ui?.messageLineHeight || 1.15);
-          el.style.lineHeight = lh;
+          el.style.lineHeight = String(lh);
 
-          // line clamp + shrink-to-fit behavior:
-          // if text wants more than maxLines, it will shrink until it naturally fits.
           const maxLines = Number(CONFIG.ui?.messageMaxLines || 2);
           el.style.display = '-webkit-box';
           el.style.webkitBoxOrient = 'vertical';
@@ -551,43 +550,12 @@
       }
     }
 
-    function getMessageFontSizeAe() {
-      const el = fields.message;
-      if (!el) return null;
-      const px = parseFloat(getComputedStyle(el).fontSize);
-      if (!Number.isFinite(px) || !lastScale) return null;
-      return px / lastScale;
-    }
-
-    function updateMessageWarning() {
-      const warnBelow = Number(CONFIG.ui?.warnMessageBelowFontSize || 0);
-      const sizeAe = getMessageFontSizeAe();
-      const show = (sizeAe !== null) && warnBelow > 0 && sizeAe < warnBelow;
-
-      const msg = show
-        ? `Your message is a bit long — it shrunk to about ${sizeAe.toFixed(1)}px (AE). Consider shortening it for best readability.`
-        : '';
-
-      // Editor warning
-      if (messageWarning) {
-        messageWarning.textContent = msg;
-        messageWarning.style.display = show ? 'block' : 'none';
-      }
-
-      // Preview warning
-      if (messageWarningPreview) {
-        messageWarningPreview.textContent = msg;
-        messageWarningPreview.style.display = show ? 'block' : 'none';
-      }
-    }
-
     function applyStateToFields() {
       resetTextStyles();
       for (const key in fields) {
         fields[key].textContent = state[key] || '';
       }
       applyAutoShrinkAll();
-      updateMessageWarning();
     }
 
     // ---- State ----
@@ -621,11 +589,6 @@
       const max = Number(inputs.message.maxLength || CONFIG.ui?.messageMaxChars || 120);
       const len = (inputs.message.value || '').length;
       if (messageCounter) messageCounter.textContent = `${len}/${max}`;
-
-      if (messageHelper) {
-        const lines = Number(CONFIG.ui?.messageMaxLines || 2);
-        messageHelper.textContent = `Max ${lines} lines • Auto-shrinks`;
-      }
     }
 
     // ---- Views ----
@@ -635,14 +598,13 @@
       editor.style.display = 'block';
       instructions.textContent = '';
       scratchCanvas.style.display = 'none';
-      if (messageWarningPreview) messageWarningPreview.style.display = 'none';
     }
 
     function showPreview() {
       editor.style.display = 'none';
       card.classList.add('active');
       actions.style.display = 'block';
-      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap “Back to Edit” to fix it.'
+      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap “Back to Edit” to fix it.';
       scratchCanvas.style.display = 'none';
 
       requestAnimationFrame(() => {
@@ -655,7 +617,7 @@
       editor.style.display = 'none';
       actions.style.display = 'none';
       card.classList.add('active');
-      instructions.textContent = '✨ Scratch to reveal your surprise! ✨'
+      instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
       scratchCanvas.style.display = 'block';
 
       requestAnimationFrame(() => {
@@ -702,8 +664,6 @@
       }
 
       function eraseCircle(pos) {
-        const r = (Number(CONFIG.scratch?.brushSize || 120) * lastScale) / lastScale; // keep in canvas px terms below
-        // Convert AE px to canvas px (overlay is authored at AE size)
         const radius = Number(CONFIG.scratch?.brushSize || 120) / 2;
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
@@ -786,50 +746,19 @@
       }
     }
 
-    function withCacheBust(url) {
-      if (!url) return url;
-      const v = (CONFIG.assetsVersion || '').trim();
-      if (!v) return url;
-      return url + (url.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(v);
-    }
-
     (function boot() {
-      // Images
-      // Background media is loaded via <video> source (or <img> fallback)
-      if (bgVideo) {
-        const srcEl = bgVideo.querySelector('source');
-        if (srcEl) srcEl.src = withCacheBust(CONFIG.images.backgroundVideo);
-        // Re-load after updating src
-        bgVideo.load();
-      }
-      if (bgImg) {
-        bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
-      }
-
       // Meta convenience
       applySocialMetaFromConfig();
 
       // Fonts
       ensureGoogleFontsLink();
-      if (CONFIG.fonts && CONFIG.fonts[CONFIG.defaultFontKey]) {
-        document.body.style.fontFamily = CONFIG.fonts[CONFIG.defaultFontKey];
-      }
 
-      // Message UI
-      applyMessageMaxChars();
-      inputs.message.addEventListener('input', () => {
-        updateMessageCounter();
-        // Live-preview warning while typing (based on current preview text size if visible)
-        if (card.classList.contains('active')) {
-          pullInputsToState();
-          applyStateToFields();
-        }
-      });
-
-      // Layout now, after image load, and on resize
-      applyFieldLayout();
-      // Layout after media is ready
+      // Media
       if (bgVideo) {
+        const srcEl = bgVideo.querySelector('source');
+        if (srcEl) srcEl.src = withCacheBust(CONFIG.images.backgroundVideo);
+        bgVideo.load();
+
         bgVideo.onloadedmetadata = () => {
           requestAnimationFrame(() => {
             applyFieldLayout();
@@ -838,12 +767,24 @@
         };
       }
 
-      if (bgImg) bgImg.onload = () => {
-        requestAnimationFrame(() => {
-          applyFieldLayout();
-          if (card.classList.contains('active')) applyStateToFields();
-        });
-      };
+      if (bgImg) {
+        bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
+        bgImg.onload = () => {
+          requestAnimationFrame(() => {
+            applyFieldLayout();
+            if (card.classList.contains('active')) applyStateToFields();
+          });
+        };
+      }
+
+      // Message UI
+      applyMessageMaxChars();
+      inputs.message.addEventListener('input', () => {
+        updateMessageCounter();
+      });
+
+      // Layout now, and on resize
+      applyFieldLayout();
       window.addEventListener('resize', () => {
         applyFieldLayout();
         if (card.classList.contains('active')) applyStateToFields();
@@ -886,12 +827,11 @@
         linkBox.textContent = url.toString();
 
         // Long links can change the actions height and shrink the card.
-        // Recompute layout so text + scratch stay aligned in preview.
+        // Recompute layout so text stays aligned in preview.
         requestAnimationFrame(() => {
           applyFieldLayout();
           applyStateToFields();
         });
-      };
       };
 
       runSelfTests();
