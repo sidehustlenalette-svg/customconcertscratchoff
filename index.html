@@ -296,7 +296,7 @@
       font-family: 'Inter', 'Arial', sans-serif;
       color: #4a3b2a;
       /* Prevent long links from reflowing the whole page */
-      max-height: 88px;
+      height: 88px;
       overflow: auto;
     }
 
@@ -828,9 +828,12 @@
 
         // Long links can change the actions height and shrink the card.
         // Recompute layout so text stays aligned in preview.
+        // Recompute layout AFTER the link box has reflowed.
         requestAnimationFrame(() => {
-          applyFieldLayout();
-          applyStateToFields();
+          requestAnimationFrame(() => {
+            applyFieldLayout();
+            applyStateToFields();
+          });
         });
       };
 
