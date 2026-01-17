@@ -56,7 +56,7 @@
         backgroundVideo: './background.mp4',
         // (Optional) fallback still image / gif
         backgroundFallback: 'https://i.imgur.com/8GqRmQz.gif',
-        scratchOverlay: 'https://i.imgur.com/MKi32hJ.png'
+        scratchOverlay: 'https://i.imgur.com/gS7ln0x.png'
       },
 
       social: {
@@ -123,7 +123,11 @@
       // Set this to your hosted page URL (GitHub Pages / Netlify / etc.) so the generated link works anywhere.
       share: {
         baseUrl: ''
-      }
+      },
+
+      // Bump this when you change any hosted asset URLs (scratch overlay, background fallback, etc.)
+      // Helps defeat aggressive browser/GitHub caching.
+      assetsVersion: 'v1'
     };
   </script>
 
@@ -286,6 +290,9 @@
       border: 1px solid rgba(0,0,0,0.08);
       font-family: 'Inter', 'Arial', sans-serif;
       color: #4a3b2a;
+      /* Prevent long links from reflowing the whole page */
+      max-height: 88px;
+      overflow: auto;
     }
 
     .instructions {
@@ -665,7 +672,7 @@
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       const overlay = new Image();
       overlay.crossOrigin = 'anonymous';
-      overlay.src = CONFIG.images.scratchOverlay;
+      overlay.src = withCacheBust(CONFIG.images.scratchOverlay);
 
       // Prevent multiple listeners if initScratch is ever called again
       canvas.onpointerdown = null;
@@ -779,17 +786,24 @@
       }
     }
 
+    function withCacheBust(url) {
+      if (!url) return url;
+      const v = (CONFIG.assetsVersion || '').trim();
+      if (!v) return url;
+      return url + (url.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(v);
+    }
+
     (function boot() {
       // Images
       // Background media is loaded via <video> source (or <img> fallback)
       if (bgVideo) {
         const srcEl = bgVideo.querySelector('source');
-        if (srcEl) srcEl.src = CONFIG.images.backgroundVideo;
+        if (srcEl) srcEl.src = withCacheBust(CONFIG.images.backgroundVideo);
         // Re-load after updating src
         bgVideo.load();
       }
       if (bgImg) {
-        bgImg.src = CONFIG.images.backgroundFallback;
+        bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
       }
 
       // Meta convenience
@@ -867,7 +881,17 @@
         const url = new URL(base);
         url.searchParams.set('mode', 'reveal');
         for (const key in state) url.searchParams.set(key, state[key] || '');
-        document.getElementById('linkBox').textContent = url.toString();
+
+        const linkBox = document.getElementById('linkBox');
+        linkBox.textContent = url.toString();
+
+        // Long links can change the actions height and shrink the card.
+        // Recompute layout so text + scratch stay aligned in preview.
+        requestAnimationFrame(() => {
+          applyFieldLayout();
+          applyStateToFields();
+        });
+      };
       };
 
       runSelfTests();
