@@ -73,7 +73,7 @@
       fields: {
         message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
         name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 200, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 1000, fontWeight: 400, align: 'center', fontKey: 'slab' },
         venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' },
         date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
       },
@@ -87,6 +87,11 @@
 
       reveal: {
         textDelayMs: 150
+      },
+
+      // Font loading: if fonts are slow on mobile, we don't want to hide text for long.
+      // After this timeout, the ticket will render with whatever fonts are available.
+      fontsWaitMs: 600
       },
 
       share: {
@@ -140,6 +145,10 @@
       width: 100%;
       flex: 1 1 auto;
       min-height: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
     }
     .loading-wrap.active { display: block; }
 
@@ -384,6 +393,7 @@
         <div class="shimmer"></div>
       </div>
       <div class="loading-text" id="loadingText">Loading your ticket…</div>
+      <div class="loading-text" style="font-size:12px; opacity:0.85;">(This usually takes less than a second)</div>
     </div>
 
     <div class="view" id="view">
@@ -505,15 +515,21 @@
     let lastScale = 1;
 
     async function waitForFonts() {
-      // Wait for Google Fonts to be ready before showing ticket text
+      // Wait for ONLY the ticket fonts, but never block for too long.
+      const timeoutMs = Number(CONFIG.fontsWaitMs ?? 600);
+
       try {
-        if (!document.fonts) return;
-        const loads = [
+        if (!document.fonts || !document.fonts.load) return;
+
+        const ticketLoads = Promise.allSettled([
           document.fonts.load('16px "Alfa Slab One"'),
           document.fonts.load('16px "Ropa Sans"')
-        ];
-        await Promise.allSettled(loads);
-        await document.fonts.ready;
+        ]);
+
+        const timeout = new Promise((resolve) => setTimeout(resolve, timeoutMs));
+
+        // Race: either fonts load, or we time out.
+        await Promise.race([ticketLoads, timeout]);
       } catch (e) {
         // non-fatal
       }
