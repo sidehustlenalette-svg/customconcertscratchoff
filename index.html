@@ -97,7 +97,7 @@
         baseUrl: ''
       },
 
-      assetsVersion: 'v5'
+      assetsVersion: 'v2'
     };
   </script>
 
@@ -107,19 +107,25 @@
     body {
       font-family: 'Inter', Arial, sans-serif;
       background: #fff;
-      min-height: 100vh;
+      height: 100dvh;           /* mobile-safe viewport height */
+      min-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 10px;
+      overflow: hidden;         /* keep everything on one screen */
     }
 
     .container {
       width: 100%;
       max-width: 600px;
+      height: 100dvh;           /* allow internal flex to size without page scroll */
+      max-height: 100dvh;
       display: flex;
       flex-direction: column;
+      justify-content: center;
       gap: 10px;
+      min-height: 0;            /* IMPORTANT for flex children to shrink */
     }
 
     /* Error banner */
@@ -134,7 +140,14 @@
     }
 
     /* ---------- EDITOR ---------- */
-    .editor { display: none; width: 100%; }
+    .editor {
+      display: none;
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;           /* if keyboard makes it tight, allow internal scroll only */
+      -webkit-overflow-scrolling: touch;
+    }
     .editor.active { display: block; }
 
     .editor h2 {
@@ -191,9 +204,12 @@
     .view {
       display: none;
       width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
       flex-direction: column;
       gap: 10px;
     }
+    .view.active { display: flex; }
     .view.active { display: flex; }
 
     .card-wrapper {
@@ -202,6 +218,8 @@
       aspect-ratio: 9 / 16;
       overflow: hidden;
       background: #fff;
+      flex: 1 1 auto;           /* shrink ticket to keep footer visible */
+      min-height: 0;
     }
 
     /* Media is absolutely positioned and contained */
@@ -242,6 +260,7 @@
       flex-direction: column;
       gap: 8px;
       width: 100%;
+      flex-shrink: 0;           /* keep buttons visible */
     }
 
     .actions button {
