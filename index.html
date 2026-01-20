@@ -97,7 +97,7 @@
         baseUrl: ''
       },
 
-      assetsVersion: 'v2'
+      assetsVersion: 'v1'
     };
   </script>
 
@@ -163,6 +163,14 @@
       margin-bottom: 12px;
       color: #666;
       line-height: 1.4;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #5a4a3a;
+      margin: 10px 2px 6px;
     }
 
     .editor input {
@@ -315,14 +323,19 @@
       <h2>Customize Your Ticket</h2>
       <p>Fill in the details below. You’ll preview your ticket before generating a shareable link.</p>
 
-      <input id="nameInput" placeholder="Recipient Name" maxlength="40" />
+      <label class="field-label" for="nameInput">Recipient Name</label>
+      <input id="nameInput" placeholder="Type here…" maxlength="40" />
 
-      <input id="messageInput" placeholder="Message (Type your custom message here)" />
+      <label class="field-label" for="messageInput">Message</label>
+      <input id="messageInput" placeholder="Type your custom message here…" />
       <div id="messageCounter">0/140</div>
 
-      <input id="artistInput" placeholder="Artist" maxlength="40" />
-      <input id="venueInput" placeholder="Venue" maxlength="50" />
-      <input id="dateInput" placeholder="Date" maxlength="30" />
+      <label class="field-label" for="artistInput">Artist</label>
+      <input id="artistInput" placeholder="Type here…" maxlength="40" />
+      <label class="field-label" for="venueInput">Venue</label>
+      <input id="venueInput" placeholder="Type here…" maxlength="50" />
+      <label class="field-label" for="dateInput">Date</label>
+      <input id="dateInput" placeholder="Type here…" maxlength="30" />
 
       <button id="previewBtn" type="button">Preview Ticket</button>
     </div>
