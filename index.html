@@ -896,39 +896,68 @@
       }
 
       // Buttons
-      document.getElementById('previewBtn').onclick = () => {
-        pullInputsToState();
-        showPreview();
-      };
-
-      document.getElementById('backBtn').onclick = () => {
-        pushStateToInputs();
-        showEditor();
-      };
-
-      document.getElementById('generateBtn').onclick = () => {
-        const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
-          ? CONFIG.share.baseUrl.trim()
-          : window.location.href;
-
-        const url = new URL(base);
-        url.searchParams.set('mode', 'reveal');
-
-        // Pack ALL text into a single encoded param (short + spoiler-safe)
-        const packed = encodeState(state);
-        if (packed) url.searchParams.set('d', packed);
-
-        const linkBox = document.getElementById('linkBox');
-        linkBox.textContent = url.toString();
-
-        // Recompute layout after link appears
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            applyFieldLayout();
-            applyStateToFields();
-          });
+      const previewBtn = document.getElementById('previewBtn');
+      if (previewBtn) {
+        previewBtn.addEventListener('click', () => {
+          try {
+            pullInputsToState();
+            showPreview();
+          } catch (err) {
+            console.error('Preview failed:', err);
+            if (fatalError) {
+              fatalError.style.display = 'block';
+              fatalError.innerHTML = '<strong>Preview failed to load.</strong><br>Please open your browser console and copy the first red error line.';
+            }
+          }
         });
-      };
+      }
+
+      const backBtn = document.getElementById('backBtn');
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          try {
+            pushStateToInputs();
+            showEditor();
+          } catch (err) {
+            console.error('Back failed:', err);
+          }
+        });
+      }
+
+      const generateBtn = document.getElementById('generateBtn');
+      if (generateBtn) {
+        generateBtn.addEventListener('click', () => {
+          try {
+            const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
+              ? CONFIG.share.baseUrl.trim()
+              : window.location.href;
+
+            const url = new URL(base);
+            url.searchParams.set('mode', 'reveal');
+
+            // Pack ALL text into a single encoded param (short + spoiler-safe)
+            const packed = encodeState(state);
+            if (packed) url.searchParams.set('d', packed);
+
+            const linkBox = document.getElementById('linkBox');
+            linkBox.textContent = url.toString();
+
+            // Recompute layout after link appears
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                applyFieldLayout();
+                applyStateToFields();
+              });
+            });
+          } catch (err) {
+            console.error('Generate link failed:', err);
+            if (fatalError) {
+              fatalError.style.display = 'block';
+              fatalError.innerHTML = '<strong>Link generation failed.</strong><br>Please open your browser console and copy the first red error line.';
+            }
+          }
+        });
+      }
 
       runSelfTests();
     })();
