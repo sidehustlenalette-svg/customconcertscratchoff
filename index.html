@@ -126,11 +126,12 @@
     .container {
       max-width: 600px;
       width: 100%;
-      height: 100dvh;          /* ensures flex sizing keeps instructions visible */
+      height: 100dvh;          /* ensures flex sizing keeps footer visible */
       max-height: 100dvh;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: stretch;    /* keep footer centered full-width */
       gap: 10px;
       min-height: 0;
     }
@@ -148,7 +149,7 @@
 
     /* ---------- EDITOR ---------- */
     /* Default visible so if JS fails, page still shows */
-    .editor { display: block; }
+    .editor { display: block; width: 100%; }
 
     .editor h2 {
       text-align: center;
@@ -249,6 +250,7 @@
 
     .actions {
       display: none;
+      width: 100%;
       flex-shrink: 0;
       gap: 8px;
     }
@@ -271,6 +273,7 @@
     }
 
     .link-box {
+      display: none; /* hide raw URL entirely */
       word-break: break-all;
       font-size: 13px;
       background: #fbf6ef;
@@ -282,13 +285,24 @@
       overflow: auto;
     }
 
+    .link-status {
+      width: 100%;
+      font-size: 13px;
+      color: #6b5a46;
+      text-align: center;
+      padding: 6px 0 2px;
+      display: none;
+    }
+
     .instructions {
+      width: 100%;
       text-align: center;
       font-size: 14px;
       color: #6b5a46;
       line-height: 1.4;
       flex-shrink: 0;
       padding-bottom: 6px;
+      margin: 0;
     }
 
     @media (max-width: 480px) {
@@ -347,7 +361,8 @@
     <div class="actions" id="actions">
       <button id="backBtn" type="button">← Back to Edit</button>
       <button id="generateBtn" type="button">Generate Shareable Link</button>
-      <button id="copyBtn" type="button" style="display:none;">Copy Link</button>
+      <button id="copyBtn" type="button" class="primary" style="display:none;">Copy Link</button>
+      <div class="link-status" id="linkStatus">Link ready — tap <b>Copy Link</b> to share.</div>
       <div class="link-box" id="linkBox"></div>
     </div>
     </div>
@@ -596,7 +611,7 @@
       card.classList.add('active');
       actions.style.display = 'flex';
       actions.style.flexDirection = 'column';
-      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap “Back to Edit” to fix it.';
+      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
       scratchCanvas.style.display = 'none';
 
       requestAnimationFrame(() => {
@@ -773,6 +788,8 @@
 
       const generateBtn = document.getElementById('generateBtn');
       const copyBtn = document.getElementById('copyBtn');
+      const linkStatus = document.getElementById('linkStatus');
+      let lastGeneratedLink = '';
 
       if (generateBtn) {
         generateBtn.addEventListener('click', () => {
@@ -785,17 +802,20 @@
           const packed = encodeState(state);
           if (packed) url.searchParams.set('d', packed);
 
-          const link = url.toString();
-          const linkBox = document.getElementById('linkBox');
-          if (linkBox) linkBox.textContent = link;
+          lastGeneratedLink = url.toString();
 
+          // Keep the raw URL hidden, but store it for copying
+          const linkBox = document.getElementById('linkBox');
+          if (linkBox) linkBox.textContent = lastGeneratedLink;
+
+          if (linkStatus) linkStatus.style.display = 'block';
           if (copyBtn) {
             copyBtn.style.display = 'block';
             copyBtn.textContent = 'Copy Link';
             copyBtn.classList.add('primary');
           }
 
-          // Long link can reflow actions area; re-apply layout after reflow
+          // Re-apply layout after UI changes (prevents any alignment drift)
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               applyFieldLayout();
@@ -807,8 +827,7 @@
 
       if (copyBtn) {
         copyBtn.addEventListener('click', async () => {
-          const linkBox = document.getElementById('linkBox');
-          const text = (linkBox && linkBox.textContent) ? linkBox.textContent : '';
+          const text = lastGeneratedLink || '';
           if (!text) return;
 
           const setCopied = () => {
@@ -822,6 +841,23 @@
               setCopied();
               return;
             }
+          } catch (e) {
+            // fall through
+          }
+
+          // Legacy fallback
+          const temp = document.createElement('textarea');
+          temp.value = text;
+          temp.setAttribute('readonly', '');
+          temp.style.position = 'fixed';
+          temp.style.left = '-9999px';
+          document.body.appendChild(temp);
+          temp.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          document.body.removeChild(temp);
+          setCopied();
+        });
+      }
           } catch (e) {
             // fall through to legacy copy
           }
