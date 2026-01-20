@@ -135,7 +135,7 @@
       // Bump this when you change any hosted asset URLs (scratch overlay, background fallback, etc.)
       // Helps defeat aggressive browser/GitHub caching.
       assetsVersion: 'v2'
-    };
+    }
   </script>
 
   <style>
@@ -164,7 +164,9 @@
     }
 
     /* ---------- EDITOR (Soft & Friendly) ---------- */
-    .editor { display: none; }
+    /* Default to visible so the page never shows a blank screen if JS fails */
+    .editor { display: block; }
+    /* JS will hide/show by setting inline styles; .active not required */
     .editor.active { display: block; }
 
     .editor h2 {
@@ -319,6 +321,12 @@
 <body>
   <div class="container">
 
+    <!-- If something goes wrong, we'll show a friendly error instead of a blank page -->
+    <div id="fatalError" style="display:none; padding:12px; border-radius:12px; background:#fff0f0; border:1px solid rgba(176,0,32,0.25); color:#7a1d2a; font-family:'Inter','Arial',sans-serif; margin-bottom:12px;">
+      <strong>Oops — something didn’t load correctly.</strong><br>
+      Please refresh the page. If it keeps happening, share a screenshot of your browser console.
+    </div>
+
     <!-- EDITOR -->
     <div class="editor" id="editor">
       <h2>Customize Your Ticket</h2>
@@ -375,6 +383,12 @@
 
   <!-- ================= APP LOGIC (do not edit) ================= -->
   <script>
+    // Show a friendly message if a script error prevents the UI from rendering
+    const fatalError = document.getElementById('fatalError');
+    window.addEventListener('error', () => {
+      if (fatalError) fatalError.style.display = 'block';
+    });
+
     const params = new URLSearchParams(window.location.search);
     const isReveal = params.get('mode') === 'reveal';
 
