@@ -104,7 +104,7 @@
       },
 
       // Bump this when you change any asset URL to defeat caching
-      assetsVersion: 'v4'
+      assetsVersion: 'v2'
     };
   </script>
 
@@ -773,6 +773,7 @@
 
       const generateBtn = document.getElementById('generateBtn');
       const copyBtn = document.getElementById('copyBtn');
+
       if (generateBtn) {
         generateBtn.addEventListener('click', () => {
           const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
@@ -794,7 +795,7 @@
             copyBtn.classList.add('primary');
           }
 
-          // Re-apply layout after link renders
+          // Long link can reflow actions area; re-apply layout after reflow
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               applyFieldLayout();
@@ -807,27 +808,35 @@
       if (copyBtn) {
         copyBtn.addEventListener('click', async () => {
           const linkBox = document.getElementById('linkBox');
-          const text = linkBox?.textContent || '';
+          const text = (linkBox && linkBox.textContent) ? linkBox.textContent : '';
           if (!text) return;
 
+          const setCopied = () => {
+            copyBtn.textContent = 'Copied! ✓';
+            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+          };
+
           try {
-            await navigator.clipboard.writeText(text);
-            copyBtn.textContent = 'Copied! ✓';
-            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
-          } catch {
-            // Fallback for older browsers
-            const temp = document.createElement('textarea');
-            temp.value = text;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand('copy');
-            document.body.removeChild(temp);
-            copyBtn.textContent = 'Copied! ✓';
-            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text);
+              setCopied();
+              return;
+            }
+          } catch (e) {
+            // fall through to legacy copy
           }
-        });
-      }
-          });
+
+          // Fallback for older browsers
+          const temp = document.createElement('textarea');
+          temp.value = text;
+          temp.setAttribute('readonly', '');
+          temp.style.position = 'fixed';
+          temp.style.left = '-9999px';
+          document.body.appendChild(temp);
+          temp.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          document.body.removeChild(temp);
+          setCopied();
         });
       }
 
