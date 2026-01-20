@@ -134,6 +134,45 @@
       font-family: 'Inter', Arial, sans-serif;
     }
 
+    /* Ticket loading shimmer */
+    .loading-wrap {
+      display: none;
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .loading-wrap.active { display: block; }
+
+    .loading-card {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 16px;
+      background: #f6f0e8;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+
+    .shimmer {
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.6), rgba(255,255,255,0));
+      animation: shimmer 1.1s infinite;
+    }
+
+    .loading-text {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #6b5a46;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
     /* ---------- EDITOR ---------- */
     .editor {
       display: none;
@@ -240,7 +279,12 @@
       inset: 0;
       pointer-events: none;
       z-index: 1;
+      opacity: 1;
+      transition: opacity 120ms ease;
     }
+
+    /* Prevent visible font/size "jump" while fonts load */
+    .rendering .text-layer { opacity: 0; }
 
     .text {
       position: absolute;
@@ -335,6 +379,13 @@
       <button id="previewBtn" type="button">Preview Ticket</button>
     </div>
 
+    <div class="loading-wrap" id="loadingWrap">
+      <div class="loading-card">
+        <div class="shimmer"></div>
+      </div>
+      <div class="loading-text" id="loadingText">Loading your ticket…</div>
+    </div>
+
     <div class="view" id="view">
       <div class="card-wrapper" id="card">
         <video id="bgVideo" class="bg-media" autoplay loop muted playsinline preload="metadata"></video>
@@ -423,6 +474,8 @@
     const isReveal = params.get('mode') === 'reveal';
 
     const editor = document.getElementById('editor');
+    const loadingWrap = document.getElementById('loadingWrap');
+    const loadingText = document.getElementById('loadingText');
     const view = document.getElementById('view');
     const card = document.getElementById('card');
     const actions = document.getElementById('actions');
@@ -450,6 +503,29 @@
 
     const state = { name: '', message: '', artist: '', venue: '', date: '' };
     let lastScale = 1;
+
+    async function waitForFonts() {
+      // Wait for Google Fonts to be ready before showing ticket text
+      try {
+        if (!document.fonts) return;
+        const loads = [
+          document.fonts.load('16px "Alfa Slab One"'),
+          document.fonts.load('16px "Ropa Sans"')
+        ];
+        await Promise.allSettled(loads);
+        await document.fonts.ready;
+      } catch (e) {
+        // non-fatal
+      }
+    }
+
+    async function renderTicket() {
+      // One place to do: wait for fonts -> layout -> text -> auto-shrink
+      await waitForFonts();
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      applyFieldLayout();
+      applyStateToFields();
+    }
 
     function setDebugMode(on) { document.body.classList.toggle('debug', !!on); }
 
@@ -570,26 +646,54 @@
     function showEditor() {
       editor.classList.add('active');
       view.classList.remove('active');
+      loadingWrap.classList.remove('active');
       scratchCanvas.style.display = 'none';
     }
 
     function showPreview() {
       editor.classList.remove('active');
-      view.classList.add('active');
+      view.classList.remove('active');
+      loadingWrap.classList.add('active');
+      if (loadingText) loadingText.textContent = 'Loading your ticket…';
+
       scratchCanvas.style.display = 'none';
       actions.style.display = 'flex';
       instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
-      requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
+
+      // Hide ticket text until fonts/layout are ready
+      card.classList.add('rendering');
+
+      renderTicket()
+        .then(() => {
+          loadingWrap.classList.remove('active');
+          view.classList.add('active');
+        })
+        .finally(() => {
+          card.classList.remove('rendering');
+        });
     }
 
     function showReveal() {
       editor.classList.remove('active');
-      view.classList.add('active');
+      view.classList.remove('active');
+      loadingWrap.classList.add('active');
+      if (loadingText) loadingText.textContent = 'Loading your ticket…';
+
       actions.style.display = 'none';
       instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
       for (const key in fields) fields[key].style.visibility = 'hidden';
       scratchCanvas.style.display = 'block';
-      requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
+
+      card.classList.add('rendering');
+
+      renderTicket()
+        .then(() => {
+          loadingWrap.classList.remove('active');
+          view.classList.add('active');
+        })
+        .finally(() => {
+          card.classList.remove('rendering');
+        });
     }
 
     function initScratch() {
@@ -684,19 +788,19 @@
         });
         bgVideo.addEventListener('loadedmetadata', () => {
           applyFieldLayout();
-          if (view.classList.contains('active')) applyStateToFields();
+          if (view.classList.contains('active')) renderTicket();
         });
 
         bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
         bgImg.style.display = 'none';
         bgImg.addEventListener('load', () => {
           applyFieldLayout();
-          if (view.classList.contains('active')) applyStateToFields();
+          if (view.classList.contains('active')) renderTicket();
         });
 
         window.addEventListener('resize', () => {
           applyFieldLayout();
-          if (view.classList.contains('active')) applyStateToFields();
+          if (view.classList.contains('active')) renderTicket();
         });
 
         if (isReveal) {
