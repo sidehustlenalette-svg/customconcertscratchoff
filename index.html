@@ -263,6 +263,13 @@
       cursor: pointer;
     }
 
+    .actions button.primary {
+      background: linear-gradient(135deg, #f3d6b6, #f0caa0);
+      border: none;
+      color: #4a3b2a;
+      font-weight: 600;
+    }
+
     .link-box {
       word-break: break-all;
       font-size: 13px;
@@ -340,7 +347,9 @@
     <div class="actions" id="actions">
       <button id="backBtn" type="button">← Back to Edit</button>
       <button id="generateBtn" type="button">Generate Shareable Link</button>
+      <button id="copyBtn" type="button" style="display:none;">Copy Link</button>
       <div class="link-box" id="linkBox"></div>
+    </div>
     </div>
 
     <div class="instructions" id="instructions"></div>
@@ -763,6 +772,7 @@
       }
 
       const generateBtn = document.getElementById('generateBtn');
+      const copyBtn = document.getElementById('copyBtn');
       if (generateBtn) {
         generateBtn.addEventListener('click', () => {
           const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
@@ -774,15 +784,49 @@
           const packed = encodeState(state);
           if (packed) url.searchParams.set('d', packed);
 
+          const link = url.toString();
           const linkBox = document.getElementById('linkBox');
-          if (linkBox) linkBox.textContent = url.toString();
+          if (linkBox) linkBox.textContent = link;
 
-          // Long link can reflow actions area; re-apply layout after reflow
+          if (copyBtn) {
+            copyBtn.style.display = 'block';
+            copyBtn.textContent = 'Copy Link';
+            copyBtn.classList.add('primary');
+          }
+
+          // Re-apply layout after link renders
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               applyFieldLayout();
               applyStateToFields();
             });
+          });
+        });
+      }
+
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          const linkBox = document.getElementById('linkBox');
+          const text = linkBox?.textContent || '';
+          if (!text) return;
+
+          try {
+            await navigator.clipboard.writeText(text);
+            copyBtn.textContent = 'Copied! ✓';
+            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+          } catch {
+            // Fallback for older browsers
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            copyBtn.textContent = 'Copied! ✓';
+            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+          }
+        });
+      }
           });
         });
       }
