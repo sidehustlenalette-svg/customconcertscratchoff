@@ -3,15 +3,11 @@
   =============================================================
   Virtual Concert Scratch-Off Ticket (One-link, passive)
   =============================================================
-  You mainly edit:
-    1) Social meta tags (STATIC)
-    2) CONFIG (all parameters in one spot)
-
-  Notes:
-    - Background supports MP4 (recommended) + optional fallback image.
-    - Scratch overlay is a PNG.
-    - Generated reveal links are spoiler-safe + shorter (single packed param).
-    - Controlled reveal delay prevents text flashing before overlay is drawn.
+  Edit only in CONFIG for new designs.
+  - Background: MP4 on GitHub Pages recommended
+  - Scratch overlay: PNG
+  - Reveal links: spoiler-safe + shorter (?mode=reveal&d=...)
+  - Copy Link button: hides raw URL
   =============================================================
 -->
 <html lang="en">
@@ -31,10 +27,10 @@
   <meta name="twitter:description" content="Scratch to reveal your surprise!" id="twDesc" />
   <meta name="twitter:image" content="https://i.imgur.com/GjmafAj.png" id="twImage" />
 
-  <!-- Tiny built-in favicon to avoid 404 -->
+  <!-- Tiny favicon to avoid 404 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E">
 
-  <!-- UI font (soft/friendly) -->
+  <!-- Fonts: UI + ticket text -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link id="googleFontsLink" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap">
@@ -44,37 +40,38 @@
     const CONFIG = {
       debug: false,
 
-      // After Effects comp size
       canvas: { width: 1080, height: 1920 },
 
       images: {
-        // Put background.mp4 in the SAME GitHub folder as index.html
+        // Put background.mp4 in the same repo folder as index.html
         backgroundVideo: './background.mp4',
-        // Optional fallback image/gif if video can’t load
+        // Optional fallback if video fails
         backgroundFallback: 'https://i.imgur.com/8GqRmQz.gif',
-        // Scratch overlay PNG
         scratchOverlay: 'https://i.imgur.com/MKi32hJ.png'
       },
 
-      // If you change fonts, update both googleFontsHref + fonts mappings.
+      social: {
+        title: 'Virtual Scratch Ticket',
+        description: 'Scratch to reveal your surprise!',
+        image: 'https://i.imgur.com/GjmafAj.png',
+        ogType: 'website',
+        twitterCard: 'summary_large_image'
+      },
+
       googleFontsHref: 'https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap',
 
-      // Ticket text fonts
       fonts: {
         slab: "'Alfa Slab One', 'Georgia', serif",
         sans: "'Ropa Sans', 'Arial', sans-serif"
       },
       defaultFontKey: 'slab',
 
-      // UI behaviors
       ui: {
         messageMaxChars: 140,
         messageMaxLines: 2,
         messageLineHeight: 1.15
       },
 
-      // Fields defined in AE PIXELS.
-      // x/y = CENTER of safe box. boxWidth/boxHeight = safe area.
       fields: {
         message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
         name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
@@ -83,28 +80,24 @@
         date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
       },
 
-      // Min font sizes in AE px (auto-shrink won’t go below)
       minFontSize: { message: 14, name: 14, artist: 14, venue: 14, date: 14 },
 
-      // Scratch brush
       scratch: {
-        brushSize: 120,          // in overlay pixels
-        brushMode: 'stroke'      // 'stroke' (smooth) or 'circle'
+        brushSize: 120,
+        brushMode: 'stroke'
       },
 
-      // Controlled reveal timing (ms) to prevent flash before overlay draws
       reveal: {
         textDelayMs: 150
       },
 
-      // Generated link base URL (set after GitHub Pages is live)
-      // Example: 'https://YOURUSERNAME.github.io/YOUR_REPO_NAME/'
       share: {
+        // Set after your page is live, e.g.
+        // baseUrl: 'https://sidehustlenalette-svg.github.io/customconcertscratchoff/'
         baseUrl: ''
       },
 
-      // Bump this when you change any asset URL to defeat caching
-      assetsVersion: 'v2'
+      assetsVersion: 'v5'
     };
   </script>
 
@@ -114,29 +107,22 @@
     body {
       font-family: 'Inter', Arial, sans-serif;
       background: #fff;
-      height: 100dvh;           /* mobile-safe viewport height */
-      min-height: 100dvh;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 10px;
-      overflow: hidden;         /* no scrolling; shrink card instead */
     }
 
     .container {
-      max-width: 600px;
       width: 100%;
-      height: 100dvh;          /* ensures flex sizing keeps footer visible */
-      max-height: 100dvh;
+      max-width: 600px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: stretch;    /* keep footer centered full-width */
       gap: 10px;
-      min-height: 0;
     }
 
-    /* Friendly error banner (never blank) */
+    /* Error banner */
     #fatalError {
       display: none;
       padding: 12px;
@@ -148,8 +134,8 @@
     }
 
     /* ---------- EDITOR ---------- */
-    /* Default visible so if JS fails, page still shows */
-    .editor { display: block; width: 100%; }
+    .editor { display: none; width: 100%; }
+    .editor.active { display: block; }
 
     .editor h2 {
       text-align: center;
@@ -170,7 +156,7 @@
       width: 100%;
       padding: 14px;
       margin-bottom: 10px;
-      font-size: 16px; /* prevent mobile auto-zoom */
+      font-size: 16px; /* prevents mobile auto-zoom */
       border-radius: 10px;
       border: 1px solid #ddd;
     }
@@ -201,26 +187,30 @@
       text-align: right;
     }
 
-    /* ---------- CARD ---------- */
+    /* ---------- VIEW (ticket + footer) ---------- */
+    .view {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .view.active { display: flex; }
+
     .card-wrapper {
       position: relative;
       width: 100%;
       aspect-ratio: 9 / 16;
-      display: none;
       overflow: hidden;
-      flex: 1 1 auto;          /* flex shrinks card so instructions stay on-screen */
-      min-height: 0;
+      background: #fff;
     }
 
-    .card-wrapper.active { display: block; }
-
-    .background-image {
+    /* Media is absolutely positioned and contained */
+    .bg-media {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
-      display: block;
-      position: absolute;
-      inset: 0;
       z-index: 0;
     }
 
@@ -239,20 +229,19 @@
       word-wrap: break-word;
     }
 
-    /* Debug overlay */
     body.debug .text { outline: 1px dashed rgba(255,0,0,0.8); background: rgba(255,0,0,0.08); }
 
     canvas {
       position: absolute;
-      touch-action: none;
       z-index: 2;
+      touch-action: none;
     }
 
     .actions {
-      display: none;
-      width: 100%;
-      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
+      width: 100%;
     }
 
     .actions button {
@@ -272,27 +261,15 @@
       font-weight: 600;
     }
 
-    .link-box {
-      display: none; /* hide raw URL entirely */
-      word-break: break-all;
-      font-size: 13px;
-      background: #fbf6ef;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.08);
-      color: #4a3b2a;
-      height: 88px;
-      overflow: auto;
-    }
-
     .link-status {
       width: 100%;
       font-size: 13px;
       color: #6b5a46;
       text-align: center;
-      padding: 6px 0 2px;
       display: none;
     }
+
+    .link-box { display: none; } /* hide raw URL entirely */
 
     .instructions {
       width: 100%;
@@ -300,27 +277,19 @@
       font-size: 14px;
       color: #6b5a46;
       line-height: 1.4;
-      flex-shrink: 0;
-      padding-bottom: 6px;
-      margin: 0;
     }
 
     @media (max-width: 480px) {
       body { padding: 8px; }
       .container { gap: 8px; }
-      .editor input { padding: 14px; font-size: 16px; }
-      .editor button { padding: 12px; font-size: 15px; }
       .instructions { font-size: 13px; }
-      .link-box { height: 76px; }
-    }
-      .instructions { font-size: 13px; }
-      .link-box { height: 76px; }
+      .actions button { font-size: 14px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="fatalError"><strong>Oops — something didn’t load correctly.</strong><br>Please refresh the page. If it keeps happening, open the console and copy the first red error line.</div>
+    <div id="fatalError"><strong>Oops — something didn’t load correctly.</strong><br>Please refresh. If it keeps happening, open the console and copy the first red error line.</div>
 
     <!-- EDITOR -->
     <div class="editor" id="editor">
@@ -339,46 +308,42 @@
       <button id="previewBtn" type="button">Preview Ticket</button>
     </div>
 
-    <!-- CARD -->
-    <div class="card-wrapper" id="card">
-      <video id="bgVideo" class="background-image" autoplay loop muted playsinline preload="auto">
-        <source id="bgVideoSource" src="./background.mp4" type="video/mp4">
-        <img id="bgImg" src="https://i.imgur.com/8GqRmQz.gif" class="background-image" alt="Scratch ticket" />
-      </video>
+    <!-- VIEW: Ticket + actions + instructions -->
+    <div class="view" id="view">
+      <div class="card-wrapper" id="card">
+        <video id="bgVideo" class="bg-media" autoplay loop muted playsinline preload="auto"></video>
+        <img id="bgImg" class="bg-media" alt="Scratch ticket" />
 
-      <div class="text-layer">
-        <div class="text" id="tName"></div>
-        <div class="text" id="tEvent"></div>
-        <div class="text" id="tArtist"></div>
-        <div class="text" id="tVenue"></div>
-        <div class="text" id="tDate"></div>
+        <div class="text-layer">
+          <div class="text" id="tName"></div>
+          <div class="text" id="tEvent"></div>
+          <div class="text" id="tArtist"></div>
+          <div class="text" id="tVenue"></div>
+          <div class="text" id="tDate"></div>
+        </div>
+
+        <canvas id="scratchCanvas" style="display:none;"></canvas>
       </div>
 
-      <canvas id="scratchCanvas" style="display:none;"></canvas>
-    </div>
+      <div class="actions" id="actions">
+        <button id="backBtn" type="button">← Back to Edit</button>
+        <button id="generateBtn" type="button">Generate Shareable Link</button>
+        <button id="copyBtn" type="button" class="primary" style="display:none;">Copy Link</button>
+        <div class="link-status" id="linkStatus">Link ready — tap <b>Copy Link</b> to share.</div>
+        <div class="link-box" id="linkBox"></div>
+      </div>
 
-    <!-- ACTIONS -->
-    <div class="actions" id="actions">
-      <button id="backBtn" type="button">← Back to Edit</button>
-      <button id="generateBtn" type="button">Generate Shareable Link</button>
-      <button id="copyBtn" type="button" class="primary" style="display:none;">Copy Link</button>
-      <div class="link-status" id="linkStatus">Link ready — tap <b>Copy Link</b> to share.</div>
-      <div class="link-box" id="linkBox"></div>
+      <div class="instructions" id="instructions"></div>
     </div>
-    </div>
-
-    <div class="instructions" id="instructions"></div>
   </div>
 
   <script>
-    // Show a friendly message if any script error happens
     const fatalError = document.getElementById('fatalError');
     window.addEventListener('error', (e) => {
       console.error(e.error || e.message);
       if (fatalError) fatalError.style.display = 'block';
     });
 
-    // Helpers
     function setMeta(id, value) {
       const el = document.getElementById(id);
       if (el && value) el.setAttribute('content', value);
@@ -408,23 +373,14 @@
       return url + (url.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(v);
     }
 
-    // Short + spoiler-safe link packing (base64url)
     function encodeState(obj) {
       try {
-        const compact = {
-          n: obj.name || '',
-          m: obj.message || '',
-          a: obj.artist || '',
-          v: obj.venue || '',
-          d: obj.date || ''
-        };
+        const compact = { n: obj.name || '', m: obj.message || '', a: obj.artist || '', v: obj.venue || '', d: obj.date || '' };
         Object.keys(compact).forEach(k => { if (!compact[k]) delete compact[k]; });
         const json = JSON.stringify(compact);
         const b64 = btoa(unescape(encodeURIComponent(json)));
         return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-      } catch {
-        return '';
-      }
+      } catch { return ''; }
     }
 
     function decodeState(str) {
@@ -434,29 +390,20 @@
         const json = decodeURIComponent(escape(atob(b64)));
         const compact = JSON.parse(json);
         if (!compact || typeof compact !== 'object') return null;
-        return {
-          name: compact.n || '',
-          message: compact.m || '',
-          artist: compact.a || '',
-          venue: compact.v || '',
-          date: compact.d || ''
-        };
-      } catch {
-        return null;
-      }
+        return { name: compact.n || '', message: compact.m || '', artist: compact.a || '', venue: compact.v || '', date: compact.d || '' };
+      } catch { return null; }
     }
 
-    // DOM
     const params = new URLSearchParams(window.location.search);
     const isReveal = params.get('mode') === 'reveal';
 
     const editor = document.getElementById('editor');
+    const view = document.getElementById('view');
     const card = document.getElementById('card');
     const actions = document.getElementById('actions');
     const instructions = document.getElementById('instructions');
 
     const bgVideo = document.getElementById('bgVideo');
-    const bgVideoSource = document.getElementById('bgVideoSource');
     const bgImg = document.getElementById('bgImg');
     const scratchCanvas = document.getElementById('scratchCanvas');
 
@@ -479,9 +426,7 @@
     const state = { name: '', message: '', artist: '', venue: '', date: '' };
     let lastScale = 1;
 
-    function setDebugMode(on) {
-      document.body.classList.toggle('debug', !!on);
-    }
+    function setDebugMode(on) { document.body.classList.toggle('debug', !!on); }
 
     function updateMessageCounter() {
       const counter = document.getElementById('messageCounter');
@@ -503,12 +448,8 @@
       const packed = params.get('d');
       if (packed) {
         const decoded = decodeState(packed);
-        if (decoded) {
-          Object.assign(state, decoded);
-          return;
-        }
+        if (decoded) { Object.assign(state, decoded); return; }
       }
-      // Back-compat
       for (const key in state) state[key] = (params.get(key) || '').trim();
     }
 
@@ -528,7 +469,6 @@
       const offsetX = (wrapW - contentW) / 2;
       const offsetY = (wrapH - contentH) / 2;
 
-      // Canvas matches contained area
       scratchCanvas.style.left = offsetX + 'px';
       scratchCanvas.style.top = offsetY + 'px';
       scratchCanvas.style.width = contentW + 'px';
@@ -542,7 +482,6 @@
         el.style.left = (offsetX + cfg.x * scale) + 'px';
         el.style.top  = (offsetY + cfg.y * scale) + 'px';
         el.style.transform = 'translate(-50%, -50%)';
-
         el.style.width = (cfg.boxWidth * scale) + 'px';
         el.style.height = (cfg.boxHeight * scale) + 'px';
 
@@ -552,7 +491,6 @@
         el.style.fontWeight = String(cfg.fontWeight ?? 400);
         el.style.textAlign = cfg.align || 'center';
 
-        // center within box
         el.style.display = 'flex';
         el.style.alignItems = 'center';
         el.style.justifyContent = (el.style.textAlign === 'left') ? 'flex-start' : (el.style.textAlign === 'right') ? 'flex-end' : 'center';
@@ -599,42 +537,28 @@
     }
 
     function showEditor() {
-      editor.style.display = 'block';
-      card.classList.remove('active');
-      actions.style.display = 'none';
-      instructions.textContent = '';
+      editor.classList.add('active');
+      view.classList.remove('active');
       scratchCanvas.style.display = 'none';
     }
 
     function showPreview() {
-      editor.style.display = 'none';
-      card.classList.add('active');
-      actions.style.display = 'flex';
-      actions.style.flexDirection = 'column';
-      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
+      editor.classList.remove('active');
+      view.classList.add('active');
       scratchCanvas.style.display = 'none';
-
-      requestAnimationFrame(() => {
-        applyFieldLayout();
-        applyStateToFields();
-      });
+      actions.style.display = 'flex';
+      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
+      requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
     }
 
     function showReveal() {
-      editor.style.display = 'none';
+      editor.classList.remove('active');
+      view.classList.add('active');
       actions.style.display = 'none';
-      card.classList.add('active');
       instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
-
-      // Hide all text until overlay is drawn
       for (const key in fields) fields[key].style.visibility = 'hidden';
-
       scratchCanvas.style.display = 'block';
-
-      requestAnimationFrame(() => {
-        applyFieldLayout();
-        applyStateToFields();
-      });
+      requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
     }
 
     function initScratch() {
@@ -651,17 +575,10 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(overlay, 0, 0);
 
-        // Reveal text after overlay is definitely drawn
         setTimeout(() => {
           for (const key in fields) fields[key].style.visibility = 'visible';
         }, Number(CONFIG.reveal?.textDelayMs || 150));
       };
-
-      // reset listeners
-      canvas.onpointerdown = null;
-      canvas.onpointerup = null;
-      canvas.onpointerleave = null;
-      canvas.onpointermove = null;
 
       let scratching = false;
       let last = null;
@@ -671,14 +588,6 @@
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
-      }
-
-      function eraseCircle(pos) {
-        const radius = Number(CONFIG.scratch?.brushSize || 120) / 2;
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
-        ctx.fill();
       }
 
       function eraseStroke(pos) {
@@ -702,6 +611,14 @@
         last = pos;
       }
 
+      function eraseCircle(pos) {
+        const radius = Number(CONFIG.scratch?.brushSize || 120) / 2;
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       function eraseAt(e) {
         const pos = getPos(e);
         const mode = String(CONFIG.scratch?.brushMode || 'stroke').toLowerCase();
@@ -717,49 +634,45 @@
 
     function runSelfTests() {
       console.assert(typeof CONFIG === 'object', 'CONFIG should exist');
-      console.assert(CONFIG.images && CONFIG.images.scratchOverlay, 'scratchOverlay must exist');
-      for (const key in CONFIG.fields) {
-        console.assert(fields[key], `Missing field element for ${key}`);
-      }
+      console.assert(editor && view && card, 'Core DOM nodes missing');
+      for (const k in CONFIG.fields) console.assert(fields[k], `Missing field element: ${k}`);
     }
 
-    // Boot
     (function boot() {
       applySocialMetaFromConfig();
       ensureGoogleFontsLink();
       setDebugMode(!isReveal && CONFIG.debug);
 
-      // Message max length
       if (inputs.message) {
         inputs.message.maxLength = Number(CONFIG.ui.messageMaxChars || 140);
         inputs.message.addEventListener('input', updateMessageCounter);
         updateMessageCounter();
       }
 
-      // Load media URLs (cache-busted)
-      if (bgVideoSource) bgVideoSource.src = withCacheBust(CONFIG.images.backgroundVideo);
-      if (bgVideo) {
-        bgVideo.load();
-        bgVideo.onloadedmetadata = () => {
-          applyFieldLayout();
-          if (card.classList.contains('active')) applyStateToFields();
-        };
-      }
-      if (bgImg) {
-        bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
-        bgImg.onload = () => {
-          applyFieldLayout();
-          if (card.classList.contains('active')) applyStateToFields();
-        };
-      }
-
-      // Resize
-      window.addEventListener('resize', () => {
+      // Load background media
+      bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
+      bgVideo.addEventListener('error', () => {
+        // fallback to image if video fails
+        bgVideo.style.display = 'none';
+        bgImg.style.display = 'block';
+      });
+      bgVideo.addEventListener('loadedmetadata', () => {
         applyFieldLayout();
-        if (card.classList.contains('active')) applyStateToFields();
+        if (view.classList.contains('active')) applyStateToFields();
       });
 
-      // Routing
+      bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
+      bgImg.style.display = 'none';
+      bgImg.addEventListener('load', () => {
+        applyFieldLayout();
+        if (view.classList.contains('active')) applyStateToFields();
+      });
+
+      window.addEventListener('resize', () => {
+        applyFieldLayout();
+        if (view.classList.contains('active')) applyStateToFields();
+      });
+
       if (isReveal) {
         loadStateFromParams();
         showReveal();
@@ -769,112 +682,60 @@
         showEditor();
       }
 
-      // Buttons
       const previewBtn = document.getElementById('previewBtn');
-      if (previewBtn) {
-        previewBtn.addEventListener('click', () => {
-          pullInputsToState();
-          showPreview();
-        });
-      }
+      previewBtn?.addEventListener('click', () => { pullInputsToState(); showPreview(); });
 
       const backBtn = document.getElementById('backBtn');
-      if (backBtn) {
-        backBtn.addEventListener('click', () => {
-          pushStateToInputs();
-          showEditor();
-        });
-      }
+      backBtn?.addEventListener('click', () => { pushStateToInputs(); showEditor(); });
 
       const generateBtn = document.getElementById('generateBtn');
       const copyBtn = document.getElementById('copyBtn');
       const linkStatus = document.getElementById('linkStatus');
       let lastGeneratedLink = '';
 
-      if (generateBtn) {
-        generateBtn.addEventListener('click', () => {
-          const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
-            ? CONFIG.share.baseUrl.trim()
-            : window.location.href;
+      generateBtn?.addEventListener('click', () => {
+        const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
+          ? CONFIG.share.baseUrl.trim()
+          : window.location.href;
 
-          const url = new URL(base);
-          url.searchParams.set('mode', 'reveal');
-          const packed = encodeState(state);
-          if (packed) url.searchParams.set('d', packed);
+        const url = new URL(base);
+        url.searchParams.set('mode', 'reveal');
+        const packed = encodeState(state);
+        if (packed) url.searchParams.set('d', packed);
+        lastGeneratedLink = url.toString();
 
-          lastGeneratedLink = url.toString();
+        if (linkStatus) linkStatus.style.display = 'block';
+        if (copyBtn) copyBtn.style.display = 'block';
 
-          // Keep the raw URL hidden, but store it for copying
-          const linkBox = document.getElementById('linkBox');
-          if (linkBox) linkBox.textContent = lastGeneratedLink;
+        // Avoid layout shift from UI updates
+        requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
+      });
 
-          if (linkStatus) linkStatus.style.display = 'block';
-          if (copyBtn) {
-            copyBtn.style.display = 'block';
-            copyBtn.textContent = 'Copy Link';
-            copyBtn.classList.add('primary');
+      copyBtn?.addEventListener('click', async () => {
+        if (!lastGeneratedLink) return;
+        const setCopied = () => {
+          copyBtn.textContent = 'Copied! ✓';
+          setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+        };
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(lastGeneratedLink);
+            setCopied();
+            return;
           }
+        } catch {}
 
-          // Re-apply layout after UI changes (prevents any alignment drift)
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              applyFieldLayout();
-              applyStateToFields();
-            });
-          });
-        });
-      }
-
-      if (copyBtn) {
-        copyBtn.addEventListener('click', async () => {
-          const text = lastGeneratedLink || '';
-          if (!text) return;
-
-          const setCopied = () => {
-            copyBtn.textContent = 'Copied! ✓';
-            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
-          };
-
-          try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              await navigator.clipboard.writeText(text);
-              setCopied();
-              return;
-            }
-          } catch (e) {
-            // fall through
-          }
-
-          // Legacy fallback
-          const temp = document.createElement('textarea');
-          temp.value = text;
-          temp.setAttribute('readonly', '');
-          temp.style.position = 'fixed';
-          temp.style.left = '-9999px';
-          document.body.appendChild(temp);
-          temp.select();
-          try { document.execCommand('copy'); } catch (e) {}
-          document.body.removeChild(temp);
-          setCopied();
-        });
-      }
-          } catch (e) {
-            // fall through to legacy copy
-          }
-
-          // Fallback for older browsers
-          const temp = document.createElement('textarea');
-          temp.value = text;
-          temp.setAttribute('readonly', '');
-          temp.style.position = 'fixed';
-          temp.style.left = '-9999px';
-          document.body.appendChild(temp);
-          temp.select();
-          try { document.execCommand('copy'); } catch (e) {}
-          document.body.removeChild(temp);
-          setCopied();
-        });
-      }
+        const temp = document.createElement('textarea');
+        temp.value = lastGeneratedLink;
+        temp.setAttribute('readonly', '');
+        temp.style.position = 'fixed';
+        temp.style.left = '-9999px';
+        document.body.appendChild(temp);
+        temp.select();
+        try { document.execCommand('copy'); } catch {}
+        document.body.removeChild(temp);
+        setCopied();
+      });
 
       runSelfTests();
     })();
