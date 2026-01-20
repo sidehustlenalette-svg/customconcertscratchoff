@@ -61,7 +61,7 @@
           artist: 'uppercase',
           venue: 'uppercase',
           date: 'uppercase'
-        },
+        }
       },
 
       ui: {
@@ -81,24 +81,24 @@
       minFontSize: { message: 14, name: 14, artist: 14, venue: 14, date: 14 },
 
       scratch: {
-  brushSize: 120,
-  brushMode: 'stroke' // stroke | circle
-},
+        brushSize: 120,
+        brushMode: 'stroke' // stroke | circle
+      },
 
-reveal: {
-  textDelayMs: 150
-},
+      reveal: {
+        textDelayMs: 150
+      },
 
-// Font loading: if fonts are slow on mobile, we don't want to hide text for long.
-// After this timeout, the ticket will render with whatever fonts are available.
-fontsWaitMs: 600,
+      // Font loading: if fonts are slow on mobile, we don't want to hide text for long.
+      // After this timeout, the ticket will render with whatever fonts are available.
+      fontsWaitMs: 600,
+      },
 
-share: {
-  baseUrl: ''
-},
+      share: {
+        baseUrl: ''
+      },
 
-assetsVersion: 'v1'
-
+      assetsVersion: 'v1'
     };
   </script>
 
@@ -292,8 +292,8 @@ assetsVersion: 'v1'
       transition: opacity 120ms ease;
     }
 
-    /* Prevent visible font/size "jump" while fonts load */
-    .rendering .text-layer { opacity: 0; }
+    /* Note: We no longer hide text while fonts load.
+       We render immediately with fallback fonts, then re-render once the ticket fonts are ready. */
 
     .text {
       position: absolute;
@@ -535,12 +535,20 @@ assetsVersion: 'v1'
       }
     }
 
-    async function renderTicket() {
-      // One place to do: wait for fonts -> layout -> text -> auto-shrink
-      await waitForFonts();
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    function renderTicket() {
+      // Render immediately (fast) using whatever fonts are currently available.
       applyFieldLayout();
       applyStateToFields();
+    }
+
+    function renderTicketAfterFonts() {
+      // Non-blocking: if fonts load later, re-render to correct sizes.
+      waitForFonts().then(() => {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          applyFieldLayout();
+          applyStateToFields();
+        }));
+      });
     }
 
     function setDebugMode(on) { document.body.classList.toggle('debug', !!on); }
@@ -668,22 +676,17 @@ assetsVersion: 'v1'
 
     function showPreview() {
       editor.classList.remove('active');
-      view.classList.remove('active');
-      loadingWrap.classList.add('active');
-      if (loadingText) loadingText.textContent = 'Loading your ticket…';
+      view.classList.add('active');
+      loadingWrap.classList.remove('active');
 
       scratchCanvas.style.display = 'none';
       actions.style.display = 'flex';
       instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
 
-      // Hide ticket text until fonts/layout are ready
-      card.classList.add('rendering');
-
-      renderTicket()
-        .then(() => {
-          loadingWrap.classList.remove('active');
-          view.classList.add('active');
-        })
+      // Render instantly; then re-render once fonts are ready
+      renderTicket();
+      renderTicketAfterFonts();
+    })
         .finally(() => {
           card.classList.remove('rendering');
         });
@@ -691,22 +694,18 @@ assetsVersion: 'v1'
 
     function showReveal() {
       editor.classList.remove('active');
-      view.classList.remove('active');
-      loadingWrap.classList.add('active');
-      if (loadingText) loadingText.textContent = 'Loading your ticket…';
+      view.classList.add('active');
+      loadingWrap.classList.remove('active');
 
       actions.style.display = 'none';
       instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
       for (const key in fields) fields[key].style.visibility = 'hidden';
       scratchCanvas.style.display = 'block';
 
-      card.classList.add('rendering');
-
-      renderTicket()
-        .then(() => {
-          loadingWrap.classList.remove('active');
-          view.classList.add('active');
-        })
+      // Render instantly; then re-render once fonts are ready
+      renderTicket();
+      renderTicketAfterFonts();
+    })
         .finally(() => {
           card.classList.remove('rendering');
         });
