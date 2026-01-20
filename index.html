@@ -64,6 +64,21 @@
         slab: "'Alfa Slab One', 'Georgia', serif",
         sans: "'Ropa Sans', 'Arial', sans-serif"
       },
+
+      textTransform: {
+        // Default transform for ticket text (preview + reveal)
+        default: 'uppercase', // 'uppercase' | 'none' | 'capitalize' | 'lowercase'
+
+        // Optional per-field overrides (keys must match CONFIG.fields)
+        // Example: { message: 'none', name: 'uppercase' }
+        fields: {
+          message: 'uppercase',
+          name: 'uppercase',
+          artist: 'uppercase',
+          venue: 'uppercase',
+          date: 'uppercase'
+        }
+      },
       defaultFontKey: 'slab',
 
       ui: {
@@ -253,6 +268,7 @@
       overflow: hidden;
       text-shadow: none;
       word-wrap: break-word;
+      text-transform: var(--ticket-text-transform, uppercase);
     }
 
     body.debug .text { outline: 1px dashed rgba(255,0,0,0.8); background: rgba(255,0,0,0.08); }
@@ -522,6 +538,12 @@
         el.style.fontSize = (cfg.fontSize * scale) + 'px';
         el.style.fontWeight = String(cfg.fontWeight ?? 400);
         el.style.textAlign = cfg.align || 'center';
+
+        // Text transform (per-field override -> default)
+        const tf = (CONFIG.textTransform && CONFIG.textTransform.fields && CONFIG.textTransform.fields[key])
+          ? CONFIG.textTransform.fields[key]
+          : (CONFIG.textTransform && CONFIG.textTransform.default) ? CONFIG.textTransform.default : 'uppercase';
+        el.style.textTransform = tf;
 
         el.style.display = 'flex';
         el.style.alignItems = 'center';
