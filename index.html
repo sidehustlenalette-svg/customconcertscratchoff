@@ -92,7 +92,7 @@
       fields: {
         message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
         name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 100, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 200, fontWeight: 400, align: 'center', fontKey: 'slab' },
         venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' },
         date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
       },
@@ -114,7 +114,7 @@
         baseUrl: ''
       },
 
-      assetsVersion: 'v2'
+      assetsVersion: 'v3'
     };
   </script>
 
@@ -605,7 +605,6 @@
       scratchCanvas.style.display = 'none';
       actions.style.display = 'flex';
       instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
-      ensureBackgroundLoaded();
       requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
     }
 
@@ -618,19 +617,6 @@
       scratchCanvas.style.display = 'block';
       ensureBackgroundLoaded();
       requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
-    }
-
-    function ensureBackgroundLoaded() {
-      // Lazy-load media only when we actually show the ticket (faster initial Customize page)
-      if (!bgVideo.dataset.loaded) {
-        bgVideo.dataset.loaded = '1';
-        if (CONFIG.images.poster) bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
-        bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
-      }
-      if (!bgImg.dataset.loaded) {
-        bgImg.dataset.loaded = '1';
-        bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
-      }
     }
 
     function initScratch() {
@@ -721,7 +707,11 @@
         updateMessageCounter();
       }
 
-      // Background media is lazy-loaded in ensureBackgroundLoaded() when preview/reveal is shown
+      // Load background media immediately (stable)
+      if (CONFIG.images.poster) bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
+      bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
+      bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
+
       bgVideo.addEventListener('error', () => {
         // fallback to image if video fails
         bgVideo.style.display = 'none';
@@ -735,6 +725,8 @@
       bgImg.style.display = 'none';
       bgImg.addEventListener('load', () => {
         applyFieldLayout();
+        if (view.classList.contains('active')) applyStateToFields();
+      });
         if (view.classList.contains('active')) applyStateToFields();
       });
         if (view.classList.contains('active')) applyStateToFields();
