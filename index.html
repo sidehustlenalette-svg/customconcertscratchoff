@@ -1,15 +1,4 @@
 <!DOCTYPE html>
-<!--
-  =============================================================
-  Virtual Concert Scratch-Off Ticket (One-link, passive)
-  =============================================================
-  Edit only in CONFIG for new designs.
-  - Background: MP4 on GitHub Pages recommended
-  - Scratch overlay: PNG
-  - Reveal links: spoiler-safe + shorter (?mode=reveal&d=...)
-  - Copy Link button: hides raw URL
-  =============================================================
--->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -27,7 +16,6 @@
   <meta name="twitter:description" content="Scratch to reveal your surprise!" id="twDesc" />
   <meta name="twitter:image" content="https://i.imgur.com/GjmafAj.png" id="twImage" />
 
-  <!-- Tiny favicon to avoid 404 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E">
 
   <!-- Fonts: UI + ticket text -->
@@ -39,15 +27,11 @@
   <script>
     const CONFIG = {
       debug: false,
-
       canvas: { width: 1080, height: 1920 },
 
       images: {
-        // Put background.mp4 in the same repo folder as index.html
         backgroundVideo: './background.mp4',
-        // Optional: a lightweight poster image that shows instantly while video loads
         poster: 'https://i.imgur.com/GjmafAj.png',
-        // Optional fallback if video fails
         backgroundFallback: 'https://i.imgur.com/8GqRmQz.gif',
         scratchOverlay: 'https://i.imgur.com/MKi32hJ.png'
       },
@@ -66,13 +50,11 @@
         slab: "'Alfa Slab One', 'Georgia', serif",
         sans: "'Ropa Sans', 'Arial', sans-serif"
       },
+      defaultFontKey: 'slab',
 
+      // Per-field text transform
       textTransform: {
-        // Default transform for ticket text (preview + reveal)
-        default: 'uppercase', // 'uppercase' | 'none' | 'capitalize' | 'lowercase'
-
-        // Optional per-field overrides (keys must match CONFIG.fields)
-        // Example: { message: 'none', name: 'uppercase' }
+        default: 'uppercase', // uppercase | none | capitalize | lowercase
         fields: {
           message: 'uppercase',
           name: 'uppercase',
@@ -81,7 +63,6 @@
           date: 'uppercase'
         }
       },
-      defaultFontKey: 'slab',
 
       ui: {
         messageMaxChars: 140,
@@ -101,7 +82,7 @@
 
       scratch: {
         brushSize: 120,
-        brushMode: 'stroke'
+        brushMode: 'stroke' // stroke | circle
       },
 
       reveal: {
@@ -109,12 +90,10 @@
       },
 
       share: {
-        // Set after your page is live, e.g.
-        // baseUrl: 'https://sidehustlenalette-svg.github.io/customconcertscratchoff/'
         baseUrl: ''
       },
 
-      assetsVersion: 'v3'
+      assetsVersion: 'v1'
     };
   </script>
 
@@ -124,28 +103,27 @@
     body {
       font-family: 'Inter', Arial, sans-serif;
       background: #fff;
-      height: 100dvh;           /* mobile-safe viewport height */
+      height: 100dvh;
       min-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 10px;
-      overflow: hidden;         /* keep everything on one screen */
+      overflow: hidden;
     }
 
     .container {
       width: 100%;
       max-width: 600px;
-      height: 100dvh;           /* allow internal flex to size without page scroll */
+      height: 100dvh;
       max-height: 100dvh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 10px;
-      min-height: 0;            /* IMPORTANT for flex children to shrink */
+      min-height: 0;
     }
 
-    /* Error banner */
     #fatalError {
       display: none;
       padding: 12px;
@@ -162,15 +140,15 @@
       width: 100%;
       flex: 1 1 auto;
       min-height: 0;
-      overflow: auto;           /* if keyboard makes it tight, allow internal scroll only */
+      overflow: auto;
       -webkit-overflow-scrolling: touch;
     }
     .editor.active { display: block; }
 
     .editor h2 {
       text-align: center;
+      margin-top: 20px;
       margin-bottom: 10px;
-      margin-top: 20px; /* extra spacing from top on customize page */
       font-weight: 600;
       color: #333;
     }
@@ -195,7 +173,7 @@
       width: 100%;
       padding: 14px;
       margin-bottom: 10px;
-      font-size: 16px; /* prevents mobile auto-zoom */
+      font-size: 16px;
       border-radius: 10px;
       border: 1px solid #ddd;
     }
@@ -217,6 +195,7 @@
       background: linear-gradient(135deg, #f3d6b6, #f0caa0);
       color: #4a3b2a;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom: 10px;
     }
 
     #messageCounter {
@@ -226,7 +205,7 @@
       text-align: right;
     }
 
-    /* ---------- VIEW (ticket + footer) ---------- */
+    /* ---------- VIEW ---------- */
     .view {
       display: none;
       width: 100%;
@@ -236,7 +215,6 @@
       gap: 10px;
     }
     .view.active { display: flex; }
-    .view.active { display: flex; }
 
     .card-wrapper {
       position: relative;
@@ -244,11 +222,10 @@
       aspect-ratio: 9 / 16;
       overflow: hidden;
       background: #fff;
-      flex: 1 1 auto;           /* shrink ticket to keep footer visible */
+      flex: 1 1 auto;
       min-height: 0;
     }
 
-    /* Media is absolutely positioned and contained */
     .bg-media {
       position: absolute;
       inset: 0;
@@ -271,7 +248,6 @@
       overflow: hidden;
       text-shadow: none;
       word-wrap: break-word;
-      text-transform: var(--ticket-text-transform, uppercase);
     }
 
     body.debug .text { outline: 1px dashed rgba(255,0,0,0.8); background: rgba(255,0,0,0.08); }
@@ -287,7 +263,7 @@
       flex-direction: column;
       gap: 8px;
       width: 100%;
-      flex-shrink: 0;           /* keep buttons visible */
+      flex-shrink: 0;
     }
 
     .actions button {
@@ -315,14 +291,13 @@
       display: none;
     }
 
-    .link-box { display: none; } /* hide raw URL entirely */
-
     .instructions {
       width: 100%;
       text-align: center;
       font-size: 14px;
       color: #6b5a46;
       line-height: 1.4;
+      flex-shrink: 0;
     }
 
     @media (max-width: 480px) {
@@ -337,7 +312,6 @@
   <div class="container">
     <div id="fatalError"><strong>Oops — something didn’t load correctly.</strong><br>Please refresh. If it keeps happening, open the console and copy the first red error line.</div>
 
-    <!-- EDITOR -->
     <div class="editor" id="editor">
       <h2>Customize Your Ticket</h2>
       <p>Fill in the details below. You’ll preview your ticket before generating a shareable link.</p>
@@ -351,15 +325,16 @@
 
       <label class="field-label" for="artistInput">Artist</label>
       <input id="artistInput" placeholder="Type here…" maxlength="40" />
+
       <label class="field-label" for="venueInput">Venue</label>
       <input id="venueInput" placeholder="Type here…" maxlength="50" />
+
       <label class="field-label" for="dateInput">Date</label>
       <input id="dateInput" placeholder="Type here…" maxlength="30" />
 
       <button id="previewBtn" type="button">Preview Ticket</button>
     </div>
 
-    <!-- VIEW: Ticket + actions + instructions -->
     <div class="view" id="view">
       <div class="card-wrapper" id="card">
         <video id="bgVideo" class="bg-media" autoplay loop muted playsinline preload="metadata"></video>
@@ -381,7 +356,6 @@
         <button id="generateBtn" type="button">Generate Shareable Link</button>
         <button id="copyBtn" type="button" class="primary" style="display:none;">Copy Link</button>
         <div class="link-status" id="linkStatus">Link ready — tap <b>Copy Link</b> to share.</div>
-        <div class="link-box" id="linkBox"></div>
       </div>
 
       <div class="instructions" id="instructions"></div>
@@ -542,12 +516,12 @@
         el.style.fontWeight = String(cfg.fontWeight ?? 400);
         el.style.textAlign = cfg.align || 'center';
 
-        // Text transform (per-field override -> default)
-        const tf = (CONFIG.textTransform && CONFIG.textTransform.fields && CONFIG.textTransform.fields[key])
+        const tf = (CONFIG.textTransform?.fields && CONFIG.textTransform.fields[key])
           ? CONFIG.textTransform.fields[key]
-          : (CONFIG.textTransform && CONFIG.textTransform.default) ? CONFIG.textTransform.default : 'uppercase';
+          : (CONFIG.textTransform?.default || 'uppercase');
         el.style.textTransform = tf;
 
+        // Align text in the box
         el.style.display = 'flex';
         el.style.alignItems = 'center';
         el.style.justifyContent = (el.style.textAlign === 'left') ? 'flex-start' : (el.style.textAlign === 'right') ? 'flex-end' : 'center';
@@ -615,7 +589,6 @@
       instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
       for (const key in fields) fields[key].style.visibility = 'hidden';
       scratchCanvas.style.display = 'block';
-      ensureBackgroundLoaded();
       requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
     }
 
@@ -690,118 +663,113 @@
       canvas.onpointermove = (e) => { if (!scratching) return; eraseAt(e); };
     }
 
-    function runSelfTests() {
-      console.assert(typeof CONFIG === 'object', 'CONFIG should exist');
-      console.assert(editor && view && card, 'Core DOM nodes missing');
-      for (const k in CONFIG.fields) console.assert(fields[k], `Missing field element: ${k}`);
-    }
-
     (function boot() {
-      applySocialMetaFromConfig();
-      ensureGoogleFontsLink();
-      setDebugMode(!isReveal && CONFIG.debug);
+      try {
+        applySocialMetaFromConfig();
+        ensureGoogleFontsLink();
+        setDebugMode(!isReveal && CONFIG.debug);
 
-      if (inputs.message) {
-        inputs.message.maxLength = Number(CONFIG.ui.messageMaxChars || 140);
-        inputs.message.addEventListener('input', updateMessageCounter);
-        updateMessageCounter();
+        if (inputs.message) {
+          inputs.message.maxLength = Number(CONFIG.ui.messageMaxChars || 140);
+          inputs.message.addEventListener('input', updateMessageCounter);
+          updateMessageCounter();
+        }
+
+        // Load background media
+        if (CONFIG.images.poster) bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
+        bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
+        bgVideo.addEventListener('error', () => {
+          bgVideo.style.display = 'none';
+          bgImg.style.display = 'block';
+        });
+        bgVideo.addEventListener('loadedmetadata', () => {
+          applyFieldLayout();
+          if (view.classList.contains('active')) applyStateToFields();
+        });
+
+        bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
+        bgImg.style.display = 'none';
+        bgImg.addEventListener('load', () => {
+          applyFieldLayout();
+          if (view.classList.contains('active')) applyStateToFields();
+        });
+
+        window.addEventListener('resize', () => {
+          applyFieldLayout();
+          if (view.classList.contains('active')) applyStateToFields();
+        });
+
+        if (isReveal) {
+          loadStateFromParams();
+          showReveal();
+          applyStateToFields();
+          initScratch();
+        } else {
+          showEditor();
+        }
+
+        document.getElementById('previewBtn')?.addEventListener('click', () => {
+          pullInputsToState();
+          showPreview();
+        });
+
+        document.getElementById('backBtn')?.addEventListener('click', () => {
+          pushStateToInputs();
+          showEditor();
+        });
+
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const linkStatus = document.getElementById('linkStatus');
+        let lastGeneratedLink = '';
+
+        generateBtn?.addEventListener('click', () => {
+          const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
+            ? CONFIG.share.baseUrl.trim()
+            : window.location.href;
+
+          const url = new URL(base);
+          url.searchParams.set('mode', 'reveal');
+          const packed = encodeState(state);
+          if (packed) url.searchParams.set('d', packed);
+          lastGeneratedLink = url.toString();
+
+          if (linkStatus) linkStatus.style.display = 'block';
+          if (copyBtn) copyBtn.style.display = 'block';
+
+          requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
+        });
+
+        copyBtn?.addEventListener('click', async () => {
+          if (!lastGeneratedLink) return;
+          const setCopied = () => {
+            copyBtn.textContent = 'Copied! ✓';
+            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+          };
+
+          try {
+            if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(lastGeneratedLink);
+              setCopied();
+              return;
+            }
+          } catch (e) { /* fall back */ }
+
+          const temp = document.createElement('textarea');
+          temp.value = lastGeneratedLink;
+          temp.setAttribute('readonly', '');
+          temp.style.position = 'fixed';
+          temp.style.left = '-9999px';
+          document.body.appendChild(temp);
+          temp.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          document.body.removeChild(temp);
+          setCopied();
+        });
+      } catch (e) {
+        console.error(e);
+        if (fatalError) fatalError.style.display = 'block';
       }
-
-      // Load background media immediately (stable)
-      if (CONFIG.images.poster) bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
-      bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
-      bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
-
-      bgVideo.addEventListener('error', () => {
-        // fallback to image if video fails
-        bgVideo.style.display = 'none';
-        bgImg.style.display = 'block';
-      });
-      bgVideo.addEventListener('loadedmetadata', () => {
-        applyFieldLayout();
-        if (view.classList.contains('active')) applyStateToFields();
-      });
-
-      bgImg.style.display = 'none';
-      bgImg.addEventListener('load', () => {
-        applyFieldLayout();
-        if (view.classList.contains('active')) applyStateToFields();
-      });
-        if (view.classList.contains('active')) applyStateToFields();
-      });
-        if (view.classList.contains('active')) applyStateToFields();
-      });
-
-      window.addEventListener('resize', () => {
-        applyFieldLayout();
-        if (view.classList.contains('active')) applyStateToFields();
-      });
-
-      if (isReveal) {
-        loadStateFromParams();
-        showReveal();
-        applyStateToFields();
-        initScratch();
-      } else {
-        showEditor();
-      }
-
-      const previewBtn = document.getElementById('previewBtn');
-      previewBtn?.addEventListener('click', () => { pullInputsToState(); showPreview(); });
-
-      const backBtn = document.getElementById('backBtn');
-      backBtn?.addEventListener('click', () => { pushStateToInputs(); showEditor(); });
-
-      const generateBtn = document.getElementById('generateBtn');
-      const copyBtn = document.getElementById('copyBtn');
-      const linkStatus = document.getElementById('linkStatus');
-      let lastGeneratedLink = '';
-
-      generateBtn?.addEventListener('click', () => {
-        const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
-          ? CONFIG.share.baseUrl.trim()
-          : window.location.href;
-
-        const url = new URL(base);
-        url.searchParams.set('mode', 'reveal');
-        const packed = encodeState(state);
-        if (packed) url.searchParams.set('d', packed);
-        lastGeneratedLink = url.toString();
-
-        if (linkStatus) linkStatus.style.display = 'block';
-        if (copyBtn) copyBtn.style.display = 'block';
-
-        // Avoid layout shift from UI updates
-        requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
-      });
-
-      copyBtn?.addEventListener('click', async () => {
-        if (!lastGeneratedLink) return;
-        const setCopied = () => {
-          copyBtn.textContent = 'Copied! ✓';
-          setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
-        };
-        try {
-          if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(lastGeneratedLink);
-            setCopied();
-            return;
-          }
-        } catch {}
-
-        const temp = document.createElement('textarea');
-        temp.value = lastGeneratedLink;
-        temp.setAttribute('readonly', '');
-        temp.style.position = 'fixed';
-        temp.style.left = '-9999px';
-        document.body.appendChild(temp);
-        temp.select();
-        try { document.execCommand('copy'); } catch {}
-        document.body.removeChild(temp);
-        setCopied();
-      });
-
-      runSelfTests();
     })();
   </script>
 </body>
