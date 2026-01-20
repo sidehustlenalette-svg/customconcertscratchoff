@@ -104,7 +104,7 @@
       },
 
       // Bump this when you change any asset URL to defeat caching
-      assetsVersion: 'v2'
+      assetsVersion: 'v1'
     };
   </script>
 
@@ -114,22 +114,25 @@
     body {
       font-family: 'Inter', Arial, sans-serif;
       background: #fff;
-      min-height: 100vh;
+      height: 100dvh;           /* mobile-safe viewport height */
+      min-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 10px;
-      overflow: hidden; /* keep everything on-screen */
+      overflow: hidden;         /* no scrolling; shrink card instead */
     }
 
     .container {
       max-width: 600px;
       width: 100%;
-      max-height: 95vh;
+      height: 100dvh;          /* ensures flex sizing keeps instructions visible */
+      max-height: 100dvh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 10px;
+      min-height: 0;
     }
 
     /* Friendly error banner (never blank) */
@@ -204,8 +207,7 @@
       aspect-ratio: 9 / 16;
       display: none;
       overflow: hidden;
-      max-height: 78vh;
-      flex: 1;
+      flex: 1 1 auto;          /* flex shrinks card so instructions stay on-screen */
       min-height: 0;
     }
 
@@ -279,6 +281,16 @@
       color: #6b5a46;
       line-height: 1.4;
       flex-shrink: 0;
+      padding-bottom: 6px;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .container { gap: 8px; }
+      .editor input { padding: 12px; font-size: 14px; }
+      .editor button { padding: 12px; font-size: 15px; }
+      .instructions { font-size: 13px; }
+      .link-box { height: 76px; }
     }
   </style>
 </head>
