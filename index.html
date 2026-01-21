@@ -686,10 +686,6 @@
       // Render instantly; then re-render once fonts are ready
       renderTicket();
       renderTicketAfterFonts();
-    })
-        .finally(() => {
-          card.classList.remove('rendering');
-        });
     }
 
     function showReveal() {
@@ -705,10 +701,6 @@
       // Render instantly; then re-render once fonts are ready
       renderTicket();
       renderTicketAfterFonts();
-    })
-        .finally(() => {
-          card.classList.remove('rendering');
-        });
     }
 
     function initScratch() {
