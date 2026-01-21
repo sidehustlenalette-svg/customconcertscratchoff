@@ -31,7 +31,7 @@
 
       images: {
         backgroundVideo: './background.mp4',
-        poster: 'https://i.imgur.com/VnMfXvT.png',
+        poster: 'https://i.imgur.com/GjmafAj.png',
         backgroundFallback: 'https://i.imgur.com/8GqRmQz.gif',
         scratchOverlay: 'https://i.imgur.com/MKi32hJ.png'
       },
@@ -73,7 +73,7 @@
       fields: {
         message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
         name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 100, fontWeight: 400, align: 'center', fontKey: 'slab' },
         venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' },
         date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
       },
@@ -92,6 +92,13 @@
       // Font loading: if fonts are slow on mobile, we don't want to hide text for long.
       // After this timeout, the ticket will render with whatever fonts are available.
       fontsWaitMs: 600,
+
+      // Loading screen behavior
+      // Option A: wait for video first frame before showing preview/reveal (with a safety timeout).
+      loader: {
+        minMs: 250,   // show loader at least this long (prevents a flash)
+        maxMs: 1200   // never block longer than this
+      },
 
       share: {
         baseUrl: ''
@@ -550,7 +557,90 @@
       });
     }
 
+    // ---------- Loader helpers ----------
+    function showLoading(msg) {
+      if (loadingText && msg) loadingText.textContent = msg;
+      loadingWrap.classList.add('active');
+      editor.classList.remove('active');
+      view.classList.remove('active');
+    }
+
+    function hideLoading() {
+      loadingWrap.classList.remove('active');
+    }
+
+    function waitMs(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function waitForVideoFirstFrame(timeoutMs) {
+      return new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          cleanup();
+          resolve(true);
+        };
+        const fail = () => {
+          if (done) return;
+          done = true;
+          cleanup();
+          resolve(false);
+        };
+        const cleanup = () => {
+          bgVideo.removeEventListener('loadeddata', finish);
+          bgVideo.removeEventListener('canplay', finish);
+          bgVideo.removeEventListener('error', fail);
+        };
+
+        // Already ready?
+        if (bgVideo.readyState >= 2) {
+          resolve(true);
+          return;
+        }
+
+        bgVideo.addEventListener('loadeddata', finish, { once: true });
+        bgVideo.addEventListener('canplay', finish, { once: true });
+        bgVideo.addEventListener('error', fail, { once: true });
+
+        setTimeout(() => {
+          if (!done) {
+            cleanup();
+            resolve(false);
+          }
+        }, Number(timeoutMs || 1200));
+      });
+    }
+
+    async function runWithLoader({ message, waitForVideo }) {
+      const minMs = Number(CONFIG.loader?.minMs ?? 250);
+      const maxMs = Number(CONFIG.loader?.maxMs ?? 1200);
+      const start = performance.now();
+
+      showLoading(message || 'Loading your ticket…');
+
+      // Kick a quick render so layout is measured even before we reveal the view
+      // (prevents a "jump" right after the loader disappears)
+      applyFieldLayout();
+      applyStateToFields();
+
+      if (waitForVideo) {
+        await waitForVideoFirstFrame(maxMs);
+      } else {
+        // If we're not waiting for video, just cap delay
+        await waitMs(Math.min(150, maxMs));
+      }
+
+      const elapsed = performance.now() - start;
+      if (elapsed < minMs) await waitMs(minMs - elapsed);
+
+      hideLoading();
+    }
+
     function setDebugMode(on) { document.body.classList.toggle('debug', !!on); }
+
+    function updateMessageCounter() {(on) { document.body.classList.toggle('debug', !!on); }
 
     function updateMessageCounter() {
       const counter = document.getElementById('messageCounter');
@@ -673,31 +763,33 @@
       scratchCanvas.style.display = 'none';
     }
 
-    function showPreview() {
+    async function showPreview() {
+      // Option A: wait for video first frame before showing
+      await runWithLoader({ message: 'Loading your ticket…', waitForVideo: true });
+
       editor.classList.remove('active');
       view.classList.add('active');
-      loadingWrap.classList.remove('active');
 
       scratchCanvas.style.display = 'none';
       actions.style.display = 'flex';
       instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
 
-      // Render instantly; then re-render once fonts are ready
       renderTicket();
       renderTicketAfterFonts();
     }
 
-    function showReveal() {
+    async function showReveal() {
+      // Option A: wait for video first frame before showing
+      await runWithLoader({ message: 'Loading your ticket…', waitForVideo: true });
+
       editor.classList.remove('active');
       view.classList.add('active');
-      loadingWrap.classList.remove('active');
 
       actions.style.display = 'none';
       instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
       for (const key in fields) fields[key].style.visibility = 'hidden';
       scratchCanvas.style.display = 'block';
 
-      // Render instantly; then re-render once fonts are ready
       renderTicket();
       renderTicketAfterFonts();
     }
@@ -842,16 +934,16 @@
 
         if (isReveal) {
           loadStateFromParams();
-          showReveal();
+          await showReveal();
           applyStateToFields();
           initScratch();
         } else {
           showEditor();
         }
 
-        document.getElementById('previewBtn')?.addEventListener('click', () => {
+        document.getElementById('previewBtn')?.addEventListener('click', async () => {
           pullInputsToState();
-          showPreview();
+          await showPreview();
         });
 
         document.getElementById('backBtn')?.addEventListener('click', () => {
