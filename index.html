@@ -31,8 +31,8 @@
 
       images: {
         backgroundVideo: './background.mp4',
-        poster: 'https://i.imgur.com/VnMfXvT.png',
-        backgroundFallback: 'https://i.imgur.com/VnMfXvT.png',
+        poster: 'https://i.imgur.com/GjmafAj.png',
+        backgroundFallback: 'https://i.imgur.com/8GqRmQz.gif',
         scratchOverlay: 'https://i.imgur.com/MKi32hJ.png'
       },
 
@@ -73,7 +73,7 @@
       fields: {
         message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
         name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 100, fontWeight: 400, align: 'center', fontKey: 'slab' },
+        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
         venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' },
         date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
       },
@@ -96,7 +96,7 @@
       // Loading screen behavior
       // Option A: wait for video first frame before showing preview/reveal (with a safety timeout).
       loader: {
-        minMs: 250,   // show loader at least this long (prevents a flash)
+        minMs: 450,   // show loader at least this long (prevents a flash)
         maxMs: 1200   // never block longer than this
       },
 
@@ -156,7 +156,7 @@
       flex-direction: column;
       gap: 10px;
     }
-    .loading-wrap.active { display: block; }
+    .loading-wrap.active { display: flex; }
 
     .loading-card {
       width: 100%;
@@ -620,6 +620,9 @@
 
       showLoading(message || 'Loading your ticket…');
 
+      // Allow the browser to paint the loader before we do any waiting
+      await new Promise((r) => requestAnimationFrame(r));
+
       // Kick a quick render so layout is measured even before we reveal the view
       // (prevents a "jump" right after the loader disappears)
       applyFieldLayout();
@@ -863,7 +866,7 @@
       canvas.onpointermove = (e) => { if (!scratching) return; eraseAt(e); };
     }
 
-    (async function boot() {
+    (function boot() {
       try {
         applySocialMetaFromConfig();
         ensureGoogleFontsLink();
