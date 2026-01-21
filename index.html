@@ -89,15 +89,11 @@
         textDelayMs: 150
       },
 
-      // Font loading: if fonts are slow on mobile, we don't want to hide text for long.
-      // After this timeout, the ticket will render with whatever fonts are available.
       fontsWaitMs: 600,
 
-      // Loading screen behavior
-      // Option A: wait for video first frame before showing preview/reveal (with a safety timeout).
       loader: {
-        minMs: 450,   // show loader at least this long (prevents a flash)
-        maxMs: 1200   // never block longer than this
+        minMs: 450,
+        maxMs: 1200
       },
 
       share: {
@@ -298,9 +294,6 @@
       transition: opacity 120ms ease;
     }
 
-    /* Note: We no longer hide text while fonts load.
-       We render immediately with fallback fonts, then re-render once the ticket fonts are ready. */
-
     .text {
       position: absolute;
       color: #111;
@@ -369,11 +362,11 @@
 </head>
 <body>
   <div class="container">
-    <div id="fatalError"><strong>Oops — something didn’t load correctly.</strong><br>Please refresh. If it keeps happening, open the console and copy the first red error line.</div>
+    <div id="fatalError"><strong>Oops — something didn't load correctly.</strong><br>Please refresh. If it keeps happening, open the console and copy the first red error line.</div>
 
     <div class="editor" id="editor">
       <h2>Customize Your Ticket</h2>
-      <p>Fill in the details below. You’ll preview your ticket before generating a shareable link.</p>
+      <p>Fill in the details below. You'll preview your ticket before generating a shareable link.</p>
 
       <label class="field-label" for="nameInput">Recipient Name</label>
       <input id="nameInput" placeholder="Type here…" maxlength="40" />
@@ -431,8 +424,15 @@
 
   <script>
     const fatalError = document.getElementById('fatalError');
+    
+    // Global error handler
     window.addEventListener('error', (e) => {
-      console.error(e.error || e.message);
+      console.error('Global error:', e.error || e.message);
+      if (fatalError) fatalError.style.display = 'block';
+    });
+
+    window.addEventListener('unhandledrejection', (e) => {
+      console.error('Unhandled promise rejection:', e.reason);
       if (fatalError) fatalError.style.display = 'block';
     });
 
@@ -472,7 +472,10 @@
         const json = JSON.stringify(compact);
         const b64 = btoa(unescape(encodeURIComponent(json)));
         return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-      } catch { return ''; }
+      } catch (err) {
+        console.error('Failed to encode state:', err);
+        return '';
+      }
     }
 
     function decodeState(str) {
@@ -483,7 +486,10 @@
         const compact = JSON.parse(json);
         if (!compact || typeof compact !== 'object') return null;
         return { name: compact.n || '', message: compact.m || '', artist: compact.a || '', venue: compact.v || '', date: compact.d || '' };
-      } catch { return null; }
+      } catch (err) {
+        console.error('Failed to decode state:', err);
+        return null;
+      }
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -519,9 +525,9 @@
 
     const state = { name: '', message: '', artist: '', venue: '', date: '' };
     let lastScale = 1;
+    let scratchCleanup = null;
 
     async function waitForFonts() {
-      // Wait for ONLY the ticket fonts, but never block for too long.
       const timeoutMs = Number(CONFIG.fontsWaitMs ?? 600);
 
       try {
@@ -533,31 +539,28 @@
         ]);
 
         const timeout = new Promise((resolve) => setTimeout(resolve, timeoutMs));
-
-        // Race: either fonts load, or we time out.
         await Promise.race([ticketLoads, timeout]);
-      } catch (e) {
-        // non-fatal
+      } catch (err) {
+        console.warn('Font loading warning:', err);
       }
     }
 
     function renderTicket() {
-      // Render immediately (fast) using whatever fonts are currently available.
       applyFieldLayout();
       applyStateToFields();
     }
 
     function renderTicketAfterFonts() {
-      // Non-blocking: if fonts load later, re-render to correct sizes.
       waitForFonts().then(() => {
         requestAnimationFrame(() => requestAnimationFrame(() => {
           applyFieldLayout();
           applyStateToFields();
         }));
+      }).catch(err => {
+        console.warn('Font rendering warning:', err);
       });
     }
 
-    // ---------- Loader helpers ----------
     function showLoading(msg) {
       if (loadingText && msg) loadingText.textContent = msg;
       loadingWrap.classList.add('active');
@@ -575,6 +578,11 @@
 
     function waitForVideoFirstFrame(timeoutMs) {
       return new Promise((resolve) => {
+        if (!bgVideo) {
+          resolve(false);
+          return;
+        }
+
         let done = false;
         const finish = () => {
           if (done) return;
@@ -594,7 +602,6 @@
           bgVideo.removeEventListener('error', fail);
         };
 
-        // Already ready?
         if (bgVideo.readyState >= 2) {
           resolve(true);
           return;
@@ -620,18 +627,14 @@
 
       showLoading(message || 'Loading your ticket…');
 
-      // Allow the browser to paint the loader before we do any waiting
       await new Promise((r) => requestAnimationFrame(r));
 
-      // Kick a quick render so layout is measured even before we reveal the view
-      // (prevents a "jump" right after the loader disappears)
       applyFieldLayout();
       applyStateToFields();
 
       if (waitForVideo) {
         await waitForVideoFirstFrame(maxMs);
       } else {
-        // If we're not waiting for video, just cap delay
         await waitMs(Math.min(150, maxMs));
       }
 
@@ -641,21 +644,33 @@
       hideLoading();
     }
 
-    function setDebugMode(on) { document.body.classList.toggle('debug', !!on); }
+    function setDebugMode(on) { 
+      document.body.classList.toggle('debug', !!on); 
+    }
 
     function updateMessageCounter() {
       const counter = document.getElementById('messageCounter');
-      const max = Number(inputs.message?.maxLength || CONFIG.ui.messageMaxChars || 140);
-      const len = (inputs.message?.value || '').length;
-      if (counter) counter.textContent = `${len}/${max}`;
+      if (!counter || !inputs.message) return;
+      
+      const max = Number(inputs.message.maxLength || CONFIG.ui.messageMaxChars || 140);
+      const len = (inputs.message.value || '').length;
+      counter.textContent = `${len}/${max}`;
     }
 
     function pullInputsToState() {
-      for (const key in inputs) state[key] = (inputs[key].value || '').trim();
+      for (const key in inputs) {
+        if (inputs[key]) {
+          state[key] = (inputs[key].value || '').trim();
+        }
+      }
     }
 
     function pushStateToInputs() {
-      for (const key in inputs) inputs[key].value = state[key] || '';
+      for (const key in inputs) {
+        if (inputs[key]) {
+          inputs[key].value = state[key] || '';
+        }
+      }
       updateMessageCounter();
     }
 
@@ -663,12 +678,19 @@
       const packed = params.get('d');
       if (packed) {
         const decoded = decodeState(packed);
-        if (decoded) { Object.assign(state, decoded); return; }
+        if (decoded) { 
+          Object.assign(state, decoded); 
+          return; 
+        }
       }
-      for (const key in state) state[key] = (params.get(key) || '').trim();
+      for (const key in state) {
+        state[key] = (params.get(key) || '').trim();
+      }
     }
 
     function applyFieldLayout() {
+      if (!card) return;
+
       const wrapRect = card.getBoundingClientRect();
       const wrapW = wrapRect.width;
       const wrapH = wrapRect.height;
@@ -684,10 +706,12 @@
       const offsetX = (wrapW - contentW) / 2;
       const offsetY = (wrapH - contentH) / 2;
 
-      scratchCanvas.style.left = offsetX + 'px';
-      scratchCanvas.style.top = offsetY + 'px';
-      scratchCanvas.style.width = contentW + 'px';
-      scratchCanvas.style.height = contentH + 'px';
+      if (scratchCanvas) {
+        scratchCanvas.style.left = offsetX + 'px';
+        scratchCanvas.style.top = offsetY + 'px';
+        scratchCanvas.style.width = contentW + 'px';
+        scratchCanvas.style.height = contentH + 'px';
+      }
 
       for (const key in CONFIG.fields) {
         const cfg = CONFIG.fields[key];
@@ -711,7 +735,6 @@
           : (CONFIG.textTransform?.default || 'uppercase');
         el.style.textTransform = tf;
 
-        // Align text in the box
         el.style.display = 'flex';
         el.style.alignItems = 'center';
         el.style.justifyContent = (el.style.textAlign === 'left') ? 'flex-start' : (el.style.textAlign === 'right') ? 'flex-end' : 'center';
@@ -740,11 +763,14 @@
       }
     }
 
-    function autoShrink(el, minAe) {
+    function autoShrink(el, minSize) {
+      if (!el) return;
+      
       const maxHeight = el.offsetHeight;
       let size = parseFloat(getComputedStyle(el).fontSize);
-      const min = Math.max(8, Number(minAe || 10) * lastScale);
+      const min = Math.max(8, Number(minSize || 10) * lastScale);
       let guard = 250;
+      
       while ((el.scrollHeight > maxHeight || el.scrollWidth > el.offsetWidth) && size > min && guard-- > 0) {
         size -= 1;
         el.style.fontSize = size + 'px';
@@ -753,43 +779,59 @@
 
     function applyStateToFields() {
       resetTextStyles();
-      for (const key in fields) fields[key].textContent = state[key] || '';
-      for (const key in fields) autoShrink(fields[key], CONFIG.minFontSize[key]);
+      for (const key in fields) {
+        if (fields[key]) {
+          fields[key].textContent = state[key] || '';
+        }
+      }
+      for (const key in fields) {
+        if (fields[key]) {
+          autoShrink(fields[key], CONFIG.minFontSize[key]);
+        }
+      }
     }
 
     function showEditor() {
       editor.classList.add('active');
       view.classList.remove('active');
       loadingWrap.classList.remove('active');
-      scratchCanvas.style.display = 'none';
+      if (scratchCanvas) scratchCanvas.style.display = 'none';
+      
+      // Clean up scratch listeners if they exist
+      if (scratchCleanup) {
+        scratchCleanup();
+        scratchCleanup = null;
+      }
     }
 
     async function showPreview() {
-      // Option A: wait for video first frame before showing
       await runWithLoader({ message: 'Loading your ticket…', waitForVideo: true });
 
       editor.classList.remove('active');
       view.classList.add('active');
 
-      scratchCanvas.style.display = 'none';
-      actions.style.display = 'flex';
-      instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
+      if (scratchCanvas) scratchCanvas.style.display = 'none';
+      if (actions) actions.style.display = 'flex';
+      if (instructions) instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
 
       renderTicket();
       renderTicketAfterFonts();
     }
 
     async function showReveal() {
-      // Option A: wait for video first frame before showing
       await runWithLoader({ message: 'Loading your ticket…', waitForVideo: true });
 
       editor.classList.remove('active');
       view.classList.add('active');
 
-      actions.style.display = 'none';
-      instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
-      for (const key in fields) fields[key].style.visibility = 'hidden';
-      scratchCanvas.style.display = 'block';
+      if (actions) actions.style.display = 'none';
+      if (instructions) instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
+      
+      for (const key in fields) {
+        if (fields[key]) fields[key].style.visibility = 'hidden';
+      }
+      
+      if (scratchCanvas) scratchCanvas.style.display = 'block';
 
       renderTicket();
       renderTicketAfterFonts();
@@ -797,7 +839,11 @@
 
     function initScratch() {
       const canvas = scratchCanvas;
+      if (!canvas) return;
+      
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+      
       const overlay = new Image();
       overlay.crossOrigin = 'anonymous';
       overlay.src = withCacheBust(CONFIG.images.scratchOverlay);
@@ -810,8 +856,17 @@
         ctx.drawImage(overlay, 0, 0);
 
         setTimeout(() => {
-          for (const key in fields) fields[key].style.visibility = 'visible';
+          for (const key in fields) {
+            if (fields[key]) fields[key].style.visibility = 'visible';
+          }
         }, Number(CONFIG.reveal?.textDelayMs || 150));
+      };
+
+      overlay.onerror = () => {
+        console.error('Failed to load scratch overlay');
+        for (const key in fields) {
+          if (fields[key]) fields[key].style.visibility = 'visible';
+        }
       };
 
       let scratching = false;
@@ -860,13 +915,27 @@
         else eraseStroke(pos);
       }
 
-      canvas.onpointerdown = (e) => { scratching = true; last = null; eraseAt(e); };
-      canvas.onpointerup = () => { scratching = false; last = null; };
-      canvas.onpointerleave = () => { scratching = false; last = null; };
-      canvas.onpointermove = (e) => { if (!scratching) return; eraseAt(e); };
+      const handleDown = (e) => { scratching = true; last = null; eraseAt(e); };
+      const handleUp = () => { scratching = false; last = null; };
+      const handleLeave = () => { scratching = false; last = null; };
+      const handleMove = (e) => { if (!scratching) return; eraseAt(e); };
+
+      canvas.addEventListener('pointerdown', handleDown);
+      canvas.addEventListener('pointerup', handleUp);
+      canvas.addEventListener('pointerleave', handleLeave);
+      canvas.addEventListener('pointermove', handleMove);
+
+      // Return cleanup function
+      scratchCleanup = () => {
+        canvas.removeEventListener('pointerdown', handleDown);
+        canvas.removeEventListener('pointerup', handleUp);
+        canvas.removeEventListener('pointerleave', handleLeave);
+        canvas.removeEventListener('pointermove', handleMove);
+      };
     }
 
-    (function boot() {
+    // Main boot function - now properly async
+    (async function boot() {
       try {
         applySocialMetaFromConfig();
         ensureGoogleFontsLink();
@@ -878,61 +947,73 @@
           updateMessageCounter();
         }
 
-        // Load background media (avoid flashing stale fallback while video buffers)
-        // 1) Show poster immediately (fast, no old GIF flash)
-        if (CONFIG.images.poster) bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
+        // Video/fallback management with improved state handling
+        let videoFailed = false;
+        
+        if (CONFIG.images.poster && bgVideo) {
+          bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
+        }
 
-        // 2) Do NOT load/show fallback image unless the video fails
-        bgImg.style.display = 'none';
-        bgImg.removeAttribute('src');
+        if (bgImg) {
+          bgImg.style.display = 'none';
+          bgImg.removeAttribute('src');
+        }
 
-        // 3) Force video element to start clean, then load the current URL
-        bgVideo.style.display = 'block';
-        bgVideo.pause();
-        bgVideo.removeAttribute('src');
-        bgVideo.load();
-        bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
-        bgVideo.load();
+        if (bgVideo) {
+          bgVideo.style.display = 'block';
+          bgVideo.pause();
+          bgVideo.removeAttribute('src');
+          bgVideo.load();
+          bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
+          bgVideo.load();
+        }
 
-        let fallbackArmed = false;
         function armFallback() {
-          if (fallbackArmed) return;
-          fallbackArmed = true;
+          if (videoFailed || !bgVideo || !bgImg) return;
+          videoFailed = true;
           bgVideo.style.display = 'none';
           bgImg.style.display = 'block';
           bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
         }
 
-        // If video errors, use fallback
-        bgVideo.addEventListener('error', armFallback);
+        if (bgVideo) {
+          bgVideo.addEventListener('error', armFallback);
 
-        // If video becomes ready, keep fallback hidden and ensure layout is correct
-        bgVideo.addEventListener('loadedmetadata', () => {
-          applyFieldLayout();
-          if (view.classList.contains('active')) renderTicketAfterFonts();
-        });
-        bgVideo.addEventListener('loadeddata', () => {
-          // Video has first frame; ensure fallback stays hidden
-          bgImg.style.display = 'none';
-          bgVideo.style.display = 'block';
-          applyFieldLayout();
-          if (view.classList.contains('active')) renderTicketAfterFonts();
-        });
+          bgVideo.addEventListener('loadedmetadata', () => {
+            if (!videoFailed) {
+              applyFieldLayout();
+              if (view.classList.contains('active')) renderTicketAfterFonts();
+            }
+          });
+          
+          bgVideo.addEventListener('loadeddata', () => {
+            if (!videoFailed && bgImg && bgVideo) {
+              bgImg.style.display = 'none';
+              bgVideo.style.display = 'block';
+              applyFieldLayout();
+              if (view.classList.contains('active')) renderTicketAfterFonts();
+            }
+          });
 
-        // Safety: if video doesn't become ready within 2.5s, show fallback
-        setTimeout(() => {
-          if (bgVideo.readyState < 2) armFallback();
-        }, 2500);
+          setTimeout(() => {
+            if (bgVideo.readyState < 2) armFallback();
+          }, 2500);
+        }
 
-        // Keep layout responsive
+        // Responsive layout
+        let resizeTimeout;
         window.addEventListener('resize', () => {
-          applyFieldLayout();
-          if (view.classList.contains('active')) {
-            renderTicket();
-            renderTicketAfterFonts();
-          }
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            applyFieldLayout();
+            if (view.classList.contains('active')) {
+              renderTicket();
+              renderTicketAfterFonts();
+            }
+          }, 100);
         });
 
+        // Mode-specific initialization
         if (isReveal) {
           loadStateFromParams();
           await showReveal();
@@ -942,69 +1023,101 @@
           showEditor();
         }
 
-        document.getElementById('previewBtn')?.addEventListener('click', async () => {
-          pullInputsToState();
-          await showPreview();
-        });
+        // Button handlers
+        const previewBtn = document.getElementById('previewBtn');
+        if (previewBtn) {
+          previewBtn.addEventListener('click', async () => {
+            try {
+              pullInputsToState();
+              await showPreview();
+            } catch (err) {
+              console.error('Preview error:', err);
+              if (fatalError) fatalError.style.display = 'block';
+            }
+          });
+        }
 
-        document.getElementById('backBtn')?.addEventListener('click', () => {
-          pushStateToInputs();
-          showEditor();
-        });
+        const backBtn = document.getElementById('backBtn');
+        if (backBtn) {
+          backBtn.addEventListener('click', () => {
+            pushStateToInputs();
+            showEditor();
+          });
+        }
 
         const generateBtn = document.getElementById('generateBtn');
         const copyBtn = document.getElementById('copyBtn');
         const linkStatus = document.getElementById('linkStatus');
         let lastGeneratedLink = '';
 
-        generateBtn?.addEventListener('click', () => {
-          const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
-            ? CONFIG.share.baseUrl.trim()
-            : window.location.href;
+        if (generateBtn) {
+          generateBtn.addEventListener('click', () => {
+            try {
+              const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
+                ? CONFIG.share.baseUrl.trim()
+                : window.location.href.split('?')[0];
 
-          const url = new URL(base);
-          url.searchParams.set('mode', 'reveal');
-          const packed = encodeState(state);
-          if (packed) url.searchParams.set('d', packed);
-          lastGeneratedLink = url.toString();
+              const url = new URL(base);
+              url.searchParams.set('mode', 'reveal');
+              const packed = encodeState(state);
+              if (packed) url.searchParams.set('d', packed);
+              lastGeneratedLink = url.toString();
 
-          if (linkStatus) linkStatus.style.display = 'block';
-          if (copyBtn) copyBtn.style.display = 'block';
+              if (linkStatus) linkStatus.style.display = 'block';
+              if (copyBtn) copyBtn.style.display = 'block';
 
-          requestAnimationFrame(() => { applyFieldLayout(); applyStateToFields(); });
-        });
-
-        copyBtn?.addEventListener('click', async () => {
-          if (!lastGeneratedLink) return;
-          const setCopied = () => {
-            copyBtn.textContent = 'Copied! ✓';
-            setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
-          };
-
-          try {
-            if (navigator.clipboard?.writeText) {
-              await navigator.clipboard.writeText(lastGeneratedLink);
-              setCopied();
-              return;
+              requestAnimationFrame(() => { 
+                applyFieldLayout(); 
+                applyStateToFields(); 
+              });
+            } catch (err) {
+              console.error('Generate link error:', err);
             }
-          } catch (e) { /* fall back */ }
+          });
+        }
 
-          const temp = document.createElement('textarea');
-          temp.value = lastGeneratedLink;
-          temp.setAttribute('readonly', '');
-          temp.style.position = 'fixed';
-          temp.style.left = '-9999px';
-          document.body.appendChild(temp);
-          temp.select();
-          try { document.execCommand('copy'); } catch (e) {}
-          document.body.removeChild(temp);
-          setCopied();
-        });
-      } catch (e) {
-        console.error(e);
+        if (copyBtn) {
+          copyBtn.addEventListener('click', async () => {
+            if (!lastGeneratedLink) return;
+            
+            const setCopied = () => {
+              copyBtn.textContent = 'Copied! ✓';
+              setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+            };
+
+            try {
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(lastGeneratedLink);
+                setCopied();
+                return;
+              }
+            } catch (err) {
+              console.warn('Clipboard API failed, using fallback:', err);
+            }
+
+            // Fallback for older browsers or non-HTTPS contexts
+            const temp = document.createElement('textarea');
+            temp.value = lastGeneratedLink;
+            temp.setAttribute('readonly', '');
+            temp.style.position = 'fixed';
+            temp.style.left = '-9999px';
+            document.body.appendChild(temp);
+            temp.select();
+            try { 
+              document.execCommand('copy'); 
+              setCopied();
+            } catch (err) {
+              console.error('Copy fallback failed:', err);
+            }
+            document.body.removeChild(temp);
+          });
+        }
+
+      } catch (err) {
+        console.error('Boot error:', err);
         if (fatalError) fatalError.style.display = 'block';
       }
     })();
   </script>
 </body>
-</html>
+</html
