@@ -863,7 +863,7 @@
       canvas.onpointermove = (e) => { if (!scratching) return; eraseAt(e); };
     }
 
-    (function boot() {
+    (async function boot() {
       try {
         applySocialMetaFromConfig();
         ensureGoogleFontsLink();
