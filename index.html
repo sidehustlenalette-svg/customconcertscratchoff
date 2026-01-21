@@ -97,7 +97,7 @@
         baseUrl: ''
       },
 
-      assetsVersion: 'v1'
+      assetsVersion: 'v2'
     };
   </script>
 
@@ -785,22 +785,57 @@
           updateMessageCounter();
         }
 
-        // Load background media
+        // Load background media (avoid flashing stale fallback while video buffers)
+        // 1) Show poster immediately (fast, no old GIF flash)
         if (CONFIG.images.poster) bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
+
+        // 2) Do NOT load/show fallback image unless the video fails
+        bgImg.style.display = 'none';
+        bgImg.removeAttribute('src');
+
+        // 3) Force video element to start clean, then load the current URL
+        bgVideo.style.display = 'block';
+        bgVideo.pause();
+        bgVideo.removeAttribute('src');
+        bgVideo.load();
         bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
-        bgVideo.addEventListener('error', () => {
+        bgVideo.load();
+
+        let fallbackArmed = false;
+        function armFallback() {
+          if (fallbackArmed) return;
+          fallbackArmed = true;
           bgVideo.style.display = 'none';
           bgImg.style.display = 'block';
-        });
+          bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
+        }
+
+        // If video errors, use fallback
+        bgVideo.addEventListener('error', armFallback);
+
+        // If video becomes ready, keep fallback hidden and ensure layout is correct
         bgVideo.addEventListener('loadedmetadata', () => {
           applyFieldLayout();
-          if (view.classList.contains('active')) renderTicket();
+          if (view.classList.contains('active')) renderTicketAfterFonts();
+        });
+        bgVideo.addEventListener('loadeddata', () => {
+          // Video has first frame; ensure fallback stays hidden
+          bgImg.style.display = 'none';
+          bgVideo.style.display = 'block';
+          applyFieldLayout();
+          if (view.classList.contains('active')) renderTicketAfterFonts();
         });
 
-        bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
-        bgImg.style.display = 'none';
-        bgImg.addEventListener('load', () => {
+        // Safety: if video doesn't become ready within 2.5s, show fallback
+        setTimeout(() => {
+          if (bgVideo.readyState < 2) armFallback();
+        }, 2500);
+
+        // Keep layout responsive
+        window.addEventListener('resize', () => {
           applyFieldLayout();
+          if (view.classList.contains('active')) renderTicketAfterFonts();
+        });
           if (view.classList.contains('active')) renderTicket();
         });
 
