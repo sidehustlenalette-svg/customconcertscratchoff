@@ -97,7 +97,7 @@
         baseUrl: ''
       },
 
-      assetsVersion: 'v2'
+      assetsVersion: 'v1'
     };
   </script>
 
@@ -834,14 +834,10 @@
         // Keep layout responsive
         window.addEventListener('resize', () => {
           applyFieldLayout();
-          if (view.classList.contains('active')) renderTicketAfterFonts();
-        });
-          if (view.classList.contains('active')) renderTicket();
-        });
-
-        window.addEventListener('resize', () => {
-          applyFieldLayout();
-          if (view.classList.contains('active')) renderTicket();
+          if (view.classList.contains('active')) {
+            renderTicket();
+            renderTicketAfterFonts();
+          }
         });
 
         if (isReveal) {
