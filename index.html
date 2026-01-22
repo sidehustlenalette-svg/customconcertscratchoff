@@ -819,17 +819,29 @@
               : "center";
 
           if (key === "message") {
-            el.style.lineHeight = String(CONFIG.ui.messageLineHeight || 1.15);
-            el.style.display = "-webkit-box";
-            el.style.webkitBoxOrient = "vertical";
-            el.style.webkitLineClamp = String(CONFIG.ui.messageMaxLines || 2);
-            el.style.overflow = "hidden";
-          } else {
-            el.style.lineHeight = "normal";
-            el.style.webkitLineClamp = "";
-            el.style.webkitBoxOrient = "";
-            el.style.overflow = "hidden";
-          }
+  el.style.lineHeight = String(CONFIG.ui.messageLineHeight || 1.15);
+
+  // ✅ Wrap naturally (no ellipsis)
+  el.style.display = "flex";
+  el.style.flexDirection = "column";
+  el.style.overflow = "hidden";
+
+  // ✅ Better wrapping for long words
+  el.style.whiteSpace = "normal";
+  el.style.wordBreak = "break-word";
+  el.style.overflowWrap = "anywhere";
+  el.style.hyphens = "auto";
+
+  // ❌ Remove clamping (this is what creates the "...")
+  el.style.webkitLineClamp = "";
+  el.style.webkitBoxOrient = "";
+} else {
+  el.style.lineHeight = "normal";
+  el.style.webkitLineClamp = "";
+  el.style.webkitBoxOrient = "";
+  el.style.overflow = "hidden";
+}
+
         }
       }
 
