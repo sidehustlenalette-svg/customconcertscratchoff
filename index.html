@@ -1,1153 +1,1315 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Virtual Scratch Ticket</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Scratch Ticket</title>
 
-  <!-- Social Preview (STATIC snapshot for platforms) -->
-  <meta property="og:title" content="Virtual Scratch Ticket" id="ogTitle" />
-  <meta property="og:description" content="Scratch to reveal your surprise!" id="ogDesc" />
-  <meta property="og:image" content="https://i.imgur.com/GjmafAj.png" id="ogImage" />
-  <meta property="og:type" content="website" id="ogType" />
+    <!-- Social Preview (STATIC snapshot for platforms) -->
+    <meta property="og:title" content="Virtual Scratch Ticket" id="ogTitle" />
+    <meta
+      property="og:description"
+      content="Scratch to reveal your surprise!"
+      id="ogDesc"
+    />
+    <meta
+      property="og:image"
+      content="https://i.imgur.com/GjmafAj.png"
+      id="ogImage"
+    />
+    <meta property="og:type" content="website" id="ogType" />
 
-  <meta name="twitter:card" content="summary_large_image" id="twCard" />
-  <meta name="twitter:title" content="Virtual Scratch Ticket" id="twTitle" />
-  <meta name="twitter:description" content="Scratch to reveal your surprise!" id="twDesc" />
-  <meta name="twitter:image" content="https://i.imgur.com/GjmafAj.png" id="twImage" />
+    <meta name="twitter:card" content="summary_large_image" id="twCard" />
+    <meta name="twitter:title" content="Virtual Scratch Ticket" id="twTitle" />
+    <meta
+      name="twitter:description"
+      content="Scratch to reveal your surprise!"
+      id="twDesc"
+    />
+    <meta
+      name="twitter:image"
+      content="https://i.imgur.com/GjmafAj.png"
+      id="twImage"
+    />
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E"
+    />
 
-  <!-- Fonts: UI + ticket text -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link id="googleFontsLink" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap">
+    <!-- Fonts: UI + ticket text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      id="googleFontsLink"
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap"
+    />
 
-  <!-- ================= CONFIG (edit here) ================= -->
-  <script>
-    const CONFIG = {
-      debug: false,
-      canvas: { width: 1080, height: 1920 },
+    <!-- ================= CONFIG (edit here) ================= -->
+    <script>
+      const CONFIG = {
+        debug: false,
+        canvas: { width: 1080, height: 1920 },
 
-      images: {
-        backgroundVideo: './background.mp4',
-        poster: 'https://i.imgur.com/VnMfXvT.png',
-        backgroundFallback: 'https://i.imgur.com/VnMfXvT.png',
-        scratchOverlay: 'https://i.imgur.com/MKi32hJ.png'
-      },
+        images: {
+          backgroundVideo: "./background.mp4",
+          poster: "https://i.imgur.com/VnMfXvT.png",
+          backgroundFallback: "https://i.imgur.com/VnMfXvT.png",
+          scratchOverlay: "https://i.imgur.com/MKi32hJ.png",
+        },
 
-      social: {
-        title: 'Virtual Scratch Ticket',
-        description: 'Scratch to reveal your surprise!',
-        image: 'https://i.imgur.com/GjmafAj.png',
-        ogType: 'website',
-        twitterCard: 'summary_large_image'
-      },
+        social: {
+          title: "Virtual Scratch Ticket",
+          description: "Scratch to reveal your surprise!",
+          image: "https://i.imgur.com/GjmafAj.png",
+          ogType: "website",
+          twitterCard: "summary_large_image",
+        },
 
-      googleFontsHref: 'https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap',
+        googleFontsHref:
+          "https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Ropa+Sans:wght@400&family=Inter:wght@400;500;600&display=swap",
 
-      fonts: {
-        slab: "'Alfa Slab One', 'Georgia', serif",
-        sans: "'Ropa Sans', 'Arial', sans-serif"
-      },
-      defaultFontKey: 'slab',
+        fonts: {
+          slab: "'Alfa Slab One', 'Georgia', serif",
+          sans: "'Ropa Sans', 'Arial', sans-serif",
+        },
+        defaultFontKey: "slab",
 
-      // Per-field text transform
-      textTransform: {
-        default: 'uppercase', // uppercase | none | capitalize | lowercase
+        // Per-field text transform
+        textTransform: {
+          default: "uppercase", // uppercase | none | capitalize | lowercase
+          fields: {
+            message: "uppercase",
+            name: "uppercase",
+            artist: "uppercase",
+            venue: "uppercase",
+            date: "uppercase",
+          },
+        },
+
+        ui: {
+          messageMaxChars: 140,
+          messageMaxLines: 2,
+          messageLineHeight: 1.15,
+        },
+
         fields: {
-          message: 'uppercase',
-          name: 'uppercase',
-          artist: 'uppercase',
-          venue: 'uppercase',
-          date: 'uppercase'
+          message: {
+            x: 540,
+            y: 630,
+            boxWidth: 901.7109,
+            boxHeight: 145.7813,
+            fontSize: 48,
+            fontWeight: 400,
+            align: "center",
+            fontKey: "sans",
+          },
+          name: {
+            x: 540,
+            y: 487,
+            boxWidth: 901.7109,
+            boxHeight: 137.7813,
+            fontSize: 80,
+            fontWeight: 400,
+            align: "center",
+            fontKey: "slab",
+          },
+          artist: {
+            x: 540,
+            y: 1052,
+            boxWidth: 901.7109,
+            boxHeight: 269.7813,
+            fontSize: 100,
+            fontWeight: 400,
+            align: "center",
+            fontKey: "slab",
+          },
+          venue: {
+            x: 306,
+            y: 1523,
+            boxWidth: 432.293,
+            boxHeight: 101.7871,
+            fontSize: 30,
+            fontWeight: 400,
+            align: "center",
+            fontKey: "slab",
+          },
+          date: {
+            x: 780,
+            y: 1523,
+            boxWidth: 432.293,
+            boxHeight: 101.7871,
+            fontSize: 30,
+            fontWeight: 400,
+            align: "center",
+            fontKey: "slab",
+          },
+        },
+
+        minFontSize: { message: 14, name: 14, artist: 14, venue: 14, date: 14 },
+
+        scratch: {
+          brushSize: 120,
+          brushMode: "stroke", // stroke | circle
+        },
+
+        reveal: {
+          textDelayMs: 150,
+        },
+
+        fontsWaitMs: 600,
+
+        loader: {
+          minMs: 1500,
+          maxMs: 1500,
+        },
+
+        share: {
+          baseUrl: "",
+        },
+
+        assetsVersion: "v1",
+      };
+    </script>
+
+    <style>
+      /* ---------- BASE ---------- */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Inter", Arial, sans-serif;
+        background: #fff;
+        height: 100dvh;
+        min-height: 100dvh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        overflow: hidden;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 600px;
+        height: 100dvh;
+        max-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+        min-height: 0;
+      }
+
+      #fatalError {
+        display: none;
+        padding: 12px;
+        border-radius: 12px;
+        background: #fff0f0;
+        border: 1px solid rgba(176, 0, 32, 0.25);
+        color: #7a1d2a;
+      }
+
+      /* ---------- LOADER ---------- */
+      .loading-wrap {
+        display: none;
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .loading-wrap.active {
+        display: flex;
+      }
+
+      .loading-card {
+        width: 100%;
+        aspect-ratio: 9 / 16;
+        border-radius: 16px;
+        background: #f6f0e8;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .shimmer {
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0.6),
+          rgba(255, 255, 255, 0)
+        );
+        animation: shimmer 1.1s infinite;
+      }
+
+      .loading-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+      }
+
+      .loading-text {
+        font-size: 16px;
+        font-weight: 500;
+        color: #6b5a46;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .loading-subtext {
+        font-size: 12px;
+        color: #6b5a46;
+        opacity: 0.85;
+      }
+
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
         }
-      },
+        100% {
+          transform: translateX(100%);
+        }
+      }
 
-      ui: {
-        messageMaxChars: 140,
-        messageMaxLines: 2,
-        messageLineHeight: 1.15
-      },
+      /* ---------- EDITOR ---------- */
+      .editor {
+        display: none;
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .editor.active {
+        display: block;
+      }
 
-      fields: {
-        message: { x: 540, y: 630,  boxWidth: 901.7109, boxHeight: 145.7813, fontSize: 48, fontWeight: 400, align: 'center', fontKey: 'sans' },
-        name:    { x: 540, y: 487,  boxWidth: 901.7109, boxHeight: 137.7813, fontSize: 80, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        artist:  { x: 540, y: 1052, boxWidth: 901.7109, boxHeight: 269.7813, fontSize: 100, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        venue:   { x: 306, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' },
-        date:    { x: 780, y: 1523, boxWidth: 432.293,  boxHeight: 101.7871, fontSize: 30, fontWeight: 400, align: 'center', fontKey: 'slab' }
-      },
+      .editor h2 {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #333;
+      }
 
-      minFontSize: { message: 14, name: 14, artist: 14, venue: 14, date: 14 },
+      .editor p {
+        font-size: 14px;
+        text-align: center;
+        margin-bottom: 12px;
+        color: #666;
+        line-height: 1.4;
+      }
 
-      scratch: {
-        brushSize: 120,
-        brushMode: 'stroke' // stroke | circle
-      },
+      .field-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #5a4a3a;
+        margin: 10px 2px 6px;
+      }
 
-      reveal: {
-        textDelayMs: 150
-      },
+      .editor input {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 10px;
+        font-size: 16px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+      }
 
-      fontsWaitMs: 600,
+      .editor input:focus {
+        outline: none;
+        border-color: #e8c9a8;
+        box-shadow: 0 0 0 3px rgba(232, 201, 168, 0.25);
+      }
 
-      loader: {
-        minMs: 1500,
-        maxMs: 1500
-      },
+      .editor button {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(135deg, #f3d6b6, #f0caa0);
+        color: #4a3b2a;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        margin-bottom: 10px;
+      }
 
-      share: {
-        baseUrl: ''
-      },
+      #messageCounter {
+        font-size: 12px;
+        color: #777;
+        margin: -4px 0 10px;
+        text-align: right;
+      }
 
-      assetsVersion: 'v1'
-    };
-  </script>
+      /* ---------- VIEW ---------- */
+      .view {
+        display: none;
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .view.active {
+        display: flex;
+      }
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+      .card-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 9 / 16;
+        overflow: hidden;
+        background: #fff;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
 
-    body {
-      font-family: 'Inter', Arial, sans-serif;
-      background: #fff;
-      height: 100dvh;
-      min-height: 100dvh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 10px;
-      overflow: hidden;
-    }
+      .bg-media {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        z-index: 0;
+      }
 
-    .container {
-      width: 100%;
-      max-width: 600px;
-      height: 100dvh;
-      max-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 10px;
-      min-height: 0;
-    }
+      .text-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 1;
+        transition: opacity 120ms ease;
+      }
 
-    #fatalError {
-      display: none;
-      padding: 12px;
-      border-radius: 12px;
-      background: #fff0f0;
-      border: 1px solid rgba(176,0,32,0.25);
-      color: #7a1d2a;
-      font-family: 'Inter', Arial, sans-serif;
-    }
+      .text {
+        position: absolute;
+        color: #111;
+        overflow: hidden;
+        word-wrap: break-word;
+      }
 
-    /* Ticket loading shimmer */
-    .loading-wrap {
-  display: none;
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
+      body.debug .text {
+        outline: 1px dashed rgba(255, 0, 0, 0.8);
+        background: rgba(255, 0, 0, 0.08);
+      }
 
-    .loading-wrap.active { display: flex; }
+      canvas {
+        position: absolute;
+        z-index: 2;
+        touch-action: none;
+      }
 
-    .loading-card {
-      width: 100%;
-      aspect-ratio: 9 / 16;
-      border-radius: 16px;
-      background: #f6f0e8;
-      overflow: hidden;
-      position: relative;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        flex-shrink: 0;
+      }
 
-    .shimmer {
-      position: absolute;
-      inset: 0;
-      transform: translateX(-100%);
-      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.6), rgba(255,255,255,0));
-      animation: shimmer 1.1s infinite;
-    }
-    
-.loading-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
-  }
+      .actions button {
+        width: 100%;
+        padding: 12px;
+        font-size: 15px;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: #fff;
+        cursor: pointer;
+      }
 
-.loading-text {
-  font-size: 16px;
-  font-weight: 500;
-  color: #6b5a46;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em; /* optional but recommended */
-}
+      .actions button.primary {
+        background: linear-gradient(135deg, #f3d6b6, #f0caa0);
+        border: none;
+        color: #4a3b2a;
+        font-weight: 600;
+      }
 
+      .link-status {
+        width: 100%;
+        font-size: 13px;
+        color: #6b5a46;
+        text-align: center;
+        display: none;
+      }
 
-.loading-subtext {
-  font-size: 12px;
-  color: #6b5a46;
-  opacity: 0.85;
-}
+      .instructions {
+        width: 100%;
+        text-align: center;
+        font-size: 14px;
+        color: #6b5a46;
+        line-height: 1.4;
+        flex-shrink: 0;
+      }
 
+      @media (max-width: 480px) {
+        body {
+          padding: 8px;
+        }
+        .container {
+          gap: 8px;
+        }
+        .instructions {
+          font-size: 13px;
+        }
+        .actions button {
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
 
-    .loading-text {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 14px;
-      color: #6b5a46;
-    }
+  <body>
+    <div class="container">
+      <div id="fatalError">
+        <strong>Oops — something didn't load correctly.</strong><br />
+        Please refresh. If it keeps happening, open the console and copy the first
+        red error line.
+      </div>
 
-    @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
+      <div class="editor" id="editor">
+        <h2>Customize Your Ticket</h2>
+        <p>
+          Fill in the details below. You'll preview your ticket before generating
+          a shareable link.
+        </p>
 
-    /* ---------- EDITOR ---------- */
-    .editor {
-      display: none;
-      width: 100%;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .editor.active { display: block; }
+        <label class="field-label" for="nameInput">Recipient Name</label>
+        <input id="nameInput" placeholder="Type here…" maxlength="40" />
 
-    .editor h2 {
-      text-align: center;
-      margin-top: 20px;
-      margin-bottom: 10px;
-      font-weight: 600;
-      color: #333;
-    }
+        <label class="field-label" for="messageInput">Message</label>
+        <input id="messageInput" placeholder="Type your custom message here…" />
+        <div id="messageCounter">0/140</div>
 
-    .editor p {
-      font-size: 14px;
-      text-align: center;
-      margin-bottom: 12px;
-      color: #666;
-      line-height: 1.4;
-    }
+        <label class="field-label" for="artistInput">Artist</label>
+        <input id="artistInput" placeholder="Type here…" maxlength="40" />
 
-    .field-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #5a4a3a;
-      margin: 10px 2px 6px;
-    }
+        <label class="field-label" for="venueInput">Venue</label>
+        <input id="venueInput" placeholder="Type here…" maxlength="50" />
 
-    .editor input {
-      width: 100%;
-      padding: 14px;
-      margin-bottom: 10px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-    }
+        <label class="field-label" for="dateInput">Date</label>
+        <input id="dateInput" placeholder="Type here…" maxlength="30" />
 
-    .editor input:focus {
-      outline: none;
-      border-color: #e8c9a8;
-      box-shadow: 0 0 0 3px rgba(232,201,168,0.25);
-    }
+        <button id="previewBtn" type="button">Preview Ticket</button>
+      </div>
 
-    .editor button {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(135deg, #f3d6b6, #f0caa0);
-      color: #4a3b2a;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      margin-bottom: 10px;
-    }
-
-    #messageCounter {
-      font-size: 12px;
-      color: #777;
-      margin: -4px 0 10px;
-      text-align: right;
-    }
-
-    /* ---------- VIEW ---------- */
-    .view {
-      display: none;
-      width: 100%;
-      flex: 1 1 auto;
-      min-height: 0;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .view.active { display: flex; }
-
-    .card-wrapper {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 9 / 16;
-      overflow: hidden;
-      background: #fff;
-      flex: 1 1 auto;
-      min-height: 0;
-    }
-
-    .bg-media {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      z-index: 0;
-    }
-
-    .text-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 1;
-      opacity: 1;
-      transition: opacity 120ms ease;
-    }
-
-    .text {
-      position: absolute;
-      color: #111;
-      overflow: hidden;
-      text-shadow: none;
-      word-wrap: break-word;
-    }
-
-    body.debug .text { outline: 1px dashed rgba(255,0,0,0.8); background: rgba(255,0,0,0.08); }
-
-    canvas {
-      position: absolute;
-      z-index: 2;
-      touch-action: none;
-    }
-
-    .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: 100%;
-      flex-shrink: 0;
-    }
-
-    .actions button {
-      width: 100%;
-      padding: 12px;
-      font-size: 15px;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.10);
-      background: #fff;
-      cursor: pointer;
-    }
-
-    .actions button.primary {
-      background: linear-gradient(135deg, #f3d6b6, #f0caa0);
-      border: none;
-      color: #4a3b2a;
-      font-weight: 600;
-    }
-
-    .link-status {
-      width: 100%;
-      font-size: 13px;
-      color: #6b5a46;
-      text-align: center;
-      display: none;
-    }
-
-    .instructions {
-      width: 100%;
-      text-align: center;
-      font-size: 14px;
-      color: #6b5a46;
-      line-height: 1.4;
-      flex-shrink: 0;
-    }
-
-    @media (max-width: 480px) {
-      body { padding: 8px; }
-      .container { gap: 8px; }
-      .instructions { font-size: 13px; }
-      .actions button { font-size: 14px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div id="fatalError"><strong>Oops — something didn't load correctly.</strong><br>Please refresh. If it keeps happening, open the console and copy the first red error line.</div>
-
-    <div class="editor" id="editor">
-      <h2>Customize Your Ticket</h2>
-      <p>Fill in the details below. You'll preview your ticket before generating a shareable link.</p>
-
-      <label class="field-label" for="nameInput">Recipient Name</label>
-      <input id="nameInput" placeholder="Type here…" maxlength="40" />
-
-      <label class="field-label" for="messageInput">Message</label>
-      <input id="messageInput" placeholder="Type your custom message here…" />
-      <div id="messageCounter">0/140</div>
-
-      <label class="field-label" for="artistInput">Artist</label>
-      <input id="artistInput" placeholder="Type here…" maxlength="40" />
-
-      <label class="field-label" for="venueInput">Venue</label>
-      <input id="venueInput" placeholder="Type here…" maxlength="50" />
-
-      <label class="field-label" for="dateInput">Date</label>
-      <input id="dateInput" placeholder="Type here…" maxlength="30" />
-
-      <button id="previewBtn" type="button">Preview Ticket</button>
-    </div>
-
-    <div class="loading-wrap" id="loadingWrap">
-  <div class="loading-card">
-    <div class="shimmer"></div>
-  </div>
-
-  <div class="loading-center">
-    <div class="loading-text" id="loadingText">LOADING YOUR TICKET…</div>
-    <div class="loading-subtext">(This usually takes less than a second)</div>
-  </div>
-</div>
-
-
-    <div class="view" id="view">
-      <div class="card-wrapper" id="card">
-        <video id="bgVideo" class="bg-media" autoplay loop muted playsinline preload="metadata"></video>
-        <img id="bgImg" class="bg-media" alt="Scratch ticket" />
-
-        <div class="text-layer">
-          <div class="text" id="tName"></div>
-          <div class="text" id="tEvent"></div>
-          <div class="text" id="tArtist"></div>
-          <div class="text" id="tVenue"></div>
-          <div class="text" id="tDate"></div>
+      <div class="loading-wrap" id="loadingWrap">
+        <div class="loading-card">
+          <div class="shimmer"></div>
         </div>
 
-        <canvas id="scratchCanvas" style="display:none;"></canvas>
+        <div class="loading-center">
+          <div class="loading-text" id="loadingText">LOADING YOUR TICKET…</div>
+          <div class="loading-subtext">
+            (This usually takes less than a second)
+          </div>
+        </div>
       </div>
 
-      <div class="actions" id="actions">
-        <button id="backBtn" type="button">← Back to Edit</button>
-        <button id="generateBtn" type="button">Generate Shareable Link</button>
-        <button id="copyBtn" type="button" class="primary" style="display:none;">Copy Link</button>
-        <div class="link-status" id="linkStatus">Link ready — tap <b>Copy Link</b> to share.</div>
-      </div>
+      <div class="view" id="view">
+        <div class="card-wrapper" id="card">
+          <video
+            id="bgVideo"
+            class="bg-media"
+            autoplay
+            loop
+            muted
+            playsinline
+            preload="metadata"
+          ></video>
+          <img id="bgImg" class="bg-media" alt="Scratch ticket" />
 
-      <div class="instructions" id="instructions"></div>
+          <div class="text-layer">
+            <div class="text" id="tName"></div>
+            <div class="text" id="tEvent"></div>
+            <div class="text" id="tArtist"></div>
+            <div class="text" id="tVenue"></div>
+            <div class="text" id="tDate"></div>
+          </div>
+
+          <canvas id="scratchCanvas" style="display: none"></canvas>
+        </div>
+
+        <div class="actions" id="actions">
+          <button id="backBtn" type="button">← Back to Edit</button>
+          <button id="generateBtn" type="button">Generate Shareable Link</button>
+          <button
+            id="copyBtn"
+            type="button"
+            class="primary"
+            style="display: none"
+          >
+            Copy Link
+          </button>
+          <div class="link-status" id="linkStatus">
+            Link ready — tap <b>Copy Link</b> to share.
+          </div>
+        </div>
+
+        <div class="instructions" id="instructions"></div>
+      </div>
     </div>
-  </div>
 
-  <script>
-    const fatalError = document.getElementById('fatalError');
-    
-    // Global error handler
-    window.addEventListener('error', (e) => {
-      console.error('Global error:', e.error || e.message);
-      if (fatalError) fatalError.style.display = 'block';
-    });
+    <script>
+      /* ---------- GLOBAL ERRORS ---------- */
+      const fatalError = document.getElementById("fatalError");
 
-    window.addEventListener('unhandledrejection', (e) => {
-      console.error('Unhandled promise rejection:', e.reason);
-      if (fatalError) fatalError.style.display = 'block';
-    });
-
-    function setMeta(id, value) {
-      const el = document.getElementById(id);
-      if (el && value) el.setAttribute('content', value);
-    }
-
-    function applySocialMetaFromConfig() {
-      if (CONFIG.social?.title) document.title = CONFIG.social.title;
-      setMeta('ogTitle', CONFIG.social?.title);
-      setMeta('ogDesc', CONFIG.social?.description);
-      setMeta('ogImage', CONFIG.social?.image);
-      setMeta('ogType', CONFIG.social?.ogType);
-      setMeta('twCard', CONFIG.social?.twitterCard);
-      setMeta('twTitle', CONFIG.social?.title);
-      setMeta('twDesc', CONFIG.social?.description);
-      setMeta('twImage', CONFIG.social?.image);
-    }
-
-    function ensureGoogleFontsLink() {
-      const link = document.getElementById('googleFontsLink');
-      if (link && CONFIG.googleFontsHref) link.setAttribute('href', CONFIG.googleFontsHref);
-    }
-
-    function withCacheBust(url) {
-      if (!url) return url;
-      const v = String(CONFIG.assetsVersion || '').trim();
-      if (!v) return url;
-      return url + (url.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(v);
-    }
-
-    function encodeState(obj) {
-      try {
-        const compact = { n: obj.name || '', m: obj.message || '', a: obj.artist || '', v: obj.venue || '', d: obj.date || '' };
-        Object.keys(compact).forEach(k => { if (!compact[k]) delete compact[k]; });
-        const json = JSON.stringify(compact);
-        const b64 = btoa(unescape(encodeURIComponent(json)));
-        return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-      } catch (err) {
-        console.error('Failed to encode state:', err);
-        return '';
-      }
-    }
-
-    function decodeState(str) {
-      try {
-        let b64 = (str || '').replace(/-/g, '+').replace(/_/g, '/');
-        while (b64.length % 4) b64 += '=';
-        const json = decodeURIComponent(escape(atob(b64)));
-        const compact = JSON.parse(json);
-        if (!compact || typeof compact !== 'object') return null;
-        return { name: compact.n || '', message: compact.m || '', artist: compact.a || '', venue: compact.v || '', date: compact.d || '' };
-      } catch (err) {
-        console.error('Failed to decode state:', err);
-        return null;
-      }
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const isReveal = params.get('mode') === 'reveal';
-
-    const editor = document.getElementById('editor');
-    const loadingWrap = document.getElementById('loadingWrap');
-    const loadingText = document.getElementById('loadingText');
-    const view = document.getElementById('view');
-    const card = document.getElementById('card');
-    const actions = document.getElementById('actions');
-    const instructions = document.getElementById('instructions');
-
-    const bgVideo = document.getElementById('bgVideo');
-    const bgImg = document.getElementById('bgImg');
-    const scratchCanvas = document.getElementById('scratchCanvas');
-
-    const inputs = {
-      name: document.getElementById('nameInput'),
-      message: document.getElementById('messageInput'),
-      artist: document.getElementById('artistInput'),
-      venue: document.getElementById('venueInput'),
-      date: document.getElementById('dateInput')
-    };
-
-    const fields = {
-      name: document.getElementById('tName'),
-      message: document.getElementById('tEvent'),
-      artist: document.getElementById('tArtist'),
-      venue: document.getElementById('tVenue'),
-      date: document.getElementById('tDate')
-    };
-
-    const state = { name: '', message: '', artist: '', venue: '', date: '' };
-    let lastScale = 1;
-    let scratchCleanup = null;
-
-    async function waitForFonts() {
-      const timeoutMs = Number(CONFIG.fontsWaitMs ?? 600);
-
-      try {
-        if (!document.fonts || !document.fonts.load) return;
-
-        const ticketLoads = Promise.allSettled([
-          document.fonts.load('16px "Alfa Slab One"'),
-          document.fonts.load('16px "Ropa Sans"')
-        ]);
-
-        const timeout = new Promise((resolve) => setTimeout(resolve, timeoutMs));
-        await Promise.race([ticketLoads, timeout]);
-      } catch (err) {
-        console.warn('Font loading warning:', err);
-      }
-    }
-
-    function renderTicket() {
-      applyFieldLayout();
-      applyStateToFields();
-    }
-
-    function renderTicketAfterFonts() {
-      waitForFonts().then(() => {
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          applyFieldLayout();
-          applyStateToFields();
-        }));
-      }).catch(err => {
-        console.warn('Font rendering warning:', err);
+      window.addEventListener("error", (e) => {
+        console.error("Global error:", e.error || e.message);
+        if (fatalError) fatalError.style.display = "block";
       });
-    }
 
-    function showLoading(msg) {
-      if (loadingText && msg) loadingText.textContent = msg;
-      loadingWrap.classList.add('active');
-      editor.classList.remove('active');
-      view.classList.remove('active');
-    }
+      window.addEventListener("unhandledrejection", (e) => {
+        console.error("Unhandled promise rejection:", e.reason);
+        if (fatalError) fatalError.style.display = "block";
+      });
 
-    function hideLoading() {
-      loadingWrap.classList.remove('active');
-    }
+      /* ---------- META / ASSETS ---------- */
+      function setMeta(id, value) {
+        const el = document.getElementById(id);
+        if (el && value) el.setAttribute("content", value);
+      }
 
-    function waitMs(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
+      function applySocialMetaFromConfig() {
+        if (CONFIG.social?.title) document.title = CONFIG.social.title;
+        setMeta("ogTitle", CONFIG.social?.title);
+        setMeta("ogDesc", CONFIG.social?.description);
+        setMeta("ogImage", CONFIG.social?.image);
+        setMeta("ogType", CONFIG.social?.ogType);
+        setMeta("twCard", CONFIG.social?.twitterCard);
+        setMeta("twTitle", CONFIG.social?.title);
+        setMeta("twDesc", CONFIG.social?.description);
+        setMeta("twImage", CONFIG.social?.image);
+      }
 
-    function waitForVideoFirstFrame(timeoutMs) {
-      return new Promise((resolve) => {
-        if (!bgVideo) {
-          resolve(false);
-          return;
+      function ensureGoogleFontsLink() {
+        const link = document.getElementById("googleFontsLink");
+        if (link && CONFIG.googleFontsHref) link.href = CONFIG.googleFontsHref;
+      }
+
+      function withCacheBust(url) {
+        if (!url) return url;
+        const v = String(CONFIG.assetsVersion || "").trim();
+        if (!v) return url;
+        return `${url}${url.includes("?") ? "&" : "?"}v=${encodeURIComponent(v)}`;
+      }
+
+      /* ---------- STATE ENCODE/DECODE ---------- */
+      function encodeState(obj) {
+        try {
+          const compact = {
+            n: obj.name || "",
+            m: obj.message || "",
+            a: obj.artist || "",
+            v: obj.venue || "",
+            d: obj.date || "",
+          };
+          Object.keys(compact).forEach((k) => {
+            if (!compact[k]) delete compact[k];
+          });
+
+          const json = JSON.stringify(compact);
+          const b64 = btoa(unescape(encodeURIComponent(json)));
+          return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+        } catch (err) {
+          console.error("Failed to encode state:", err);
+          return "";
         }
+      }
 
-        let done = false;
-        const finish = () => {
-          if (done) return;
-          done = true;
-          cleanup();
-          resolve(true);
-        };
-        const fail = () => {
-          if (done) return;
-          done = true;
-          cleanup();
-          resolve(false);
-        };
-        const cleanup = () => {
-          bgVideo.removeEventListener('loadeddata', finish);
-          bgVideo.removeEventListener('canplay', finish);
-          bgVideo.removeEventListener('error', fail);
-        };
+      function decodeState(str) {
+        try {
+          let b64 = (str || "").replace(/-/g, "+").replace(/_/g, "/");
+          while (b64.length % 4) b64 += "=";
+          const json = decodeURIComponent(escape(atob(b64)));
+          const compact = JSON.parse(json);
+          if (!compact || typeof compact !== "object") return null;
 
-        if (bgVideo.readyState >= 2) {
-          resolve(true);
-          return;
+          return {
+            name: compact.n || "",
+            message: compact.m || "",
+            artist: compact.a || "",
+            venue: compact.v || "",
+            date: compact.d || "",
+          };
+        } catch (err) {
+          console.error("Failed to decode state:", err);
+          return null;
         }
+      }
 
-        bgVideo.addEventListener('loadeddata', finish, { once: true });
-        bgVideo.addEventListener('canplay', finish, { once: true });
-        bgVideo.addEventListener('error', fail, { once: true });
+      /* ---------- DOM ---------- */
+      const params = new URLSearchParams(window.location.search);
+      const isReveal = params.get("mode") === "reveal";
 
-        setTimeout(() => {
-          if (!done) {
-            cleanup();
-            resolve(false);
+      const editor = document.getElementById("editor");
+      const loadingWrap = document.getElementById("loadingWrap");
+      const loadingText = document.getElementById("loadingText");
+      const view = document.getElementById("view");
+      const card = document.getElementById("card");
+      const actions = document.getElementById("actions");
+      const instructions = document.getElementById("instructions");
+
+      const bgVideo = document.getElementById("bgVideo");
+      const bgImg = document.getElementById("bgImg");
+      const scratchCanvas = document.getElementById("scratchCanvas");
+
+      const inputs = {
+        name: document.getElementById("nameInput"),
+        message: document.getElementById("messageInput"),
+        artist: document.getElementById("artistInput"),
+        venue: document.getElementById("venueInput"),
+        date: document.getElementById("dateInput"),
+      };
+
+      const fields = {
+        name: document.getElementById("tName"),
+        message: document.getElementById("tEvent"),
+        artist: document.getElementById("tArtist"),
+        venue: document.getElementById("tVenue"),
+        date: document.getElementById("tDate"),
+      };
+
+      const state = { name: "", message: "", artist: "", venue: "", date: "" };
+      let lastScale = 1;
+      let scratchCleanup = null;
+
+      /* ---------- UTILS ---------- */
+      const waitMs = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      function setDebugMode(on) {
+        document.body.classList.toggle("debug", !!on);
+      }
+
+      function updateMessageCounter() {
+        const counter = document.getElementById("messageCounter");
+        if (!counter || !inputs.message) return;
+
+        const max = Number(inputs.message.maxLength || CONFIG.ui.messageMaxChars || 140);
+        const len = (inputs.message.value || "").length;
+        counter.textContent = `${len}/${max}`;
+      }
+
+      function pullInputsToState() {
+        for (const key in inputs) {
+          if (!inputs[key]) continue;
+          state[key] = (inputs[key].value || "").trim();
+        }
+      }
+
+      function pushStateToInputs() {
+        for (const key in inputs) {
+          if (!inputs[key]) continue;
+          inputs[key].value = state[key] || "";
+        }
+        updateMessageCounter();
+      }
+
+      function loadStateFromParams() {
+        const packed = params.get("d");
+        if (packed) {
+          const decoded = decodeState(packed);
+          if (decoded) {
+            Object.assign(state, decoded);
+            return;
           }
-        }, Number(timeoutMs || 1200));
-      });
-    }
-
-    async function runWithLoader({ message, waitForVideo }) {
-      const minMs = Number(CONFIG.loader?.minMs ?? 250);
-      const maxMs = Number(CONFIG.loader?.maxMs ?? 1200);
-      const start = performance.now();
-
-      showLoading(message || 'Loading your ticket…');
-
-      await new Promise((r) => requestAnimationFrame(r));
-
-      applyFieldLayout();
-      applyStateToFields();
-
-      if (waitForVideo) {
-        await waitForVideoFirstFrame(maxMs);
-      } else {
-        await waitMs(Math.min(150, maxMs));
-      }
-
-      const elapsed = performance.now() - start;
-      if (elapsed < minMs) await waitMs(minMs - elapsed);
-
-      hideLoading();
-    }
-
-    function setDebugMode(on) { 
-      document.body.classList.toggle('debug', !!on); 
-    }
-
-    function updateMessageCounter() {
-      const counter = document.getElementById('messageCounter');
-      if (!counter || !inputs.message) return;
-      
-      const max = Number(inputs.message.maxLength || CONFIG.ui.messageMaxChars || 140);
-      const len = (inputs.message.value || '').length;
-      counter.textContent = `${len}/${max}`;
-    }
-
-    function pullInputsToState() {
-      for (const key in inputs) {
-        if (inputs[key]) {
-          state[key] = (inputs[key].value || '').trim();
+        }
+        for (const key in state) {
+          state[key] = (params.get(key) || "").trim();
         }
       }
-    }
 
-    function pushStateToInputs() {
-      for (const key in inputs) {
-        if (inputs[key]) {
-          inputs[key].value = state[key] || '';
+      /* ---------- FONTS ---------- */
+      async function waitForFonts() {
+        const timeoutMs = Number(CONFIG.fontsWaitMs ?? 600);
+
+        try {
+          if (!document.fonts?.load) return;
+
+          const ticketLoads = Promise.allSettled([
+            document.fonts.load('16px "Alfa Slab One"'),
+            document.fonts.load('16px "Ropa Sans"'),
+          ]);
+
+          const timeout = new Promise((resolve) => setTimeout(resolve, timeoutMs));
+          await Promise.race([ticketLoads, timeout]);
+        } catch (err) {
+          console.warn("Font loading warning:", err);
         }
       }
-      updateMessageCounter();
-    }
 
-    function loadStateFromParams() {
-      const packed = params.get('d');
-      if (packed) {
-        const decoded = decodeState(packed);
-        if (decoded) { 
-          Object.assign(state, decoded); 
-          return; 
+      /* ---------- RENDER ---------- */
+      function applyFieldLayout() {
+        if (!card) return;
+
+        const wrapRect = card.getBoundingClientRect();
+        const wrapW = wrapRect.width;
+        const wrapH = wrapRect.height;
+
+        const natW =
+          (bgVideo && bgVideo.videoWidth) ||
+          (bgImg && bgImg.naturalWidth) ||
+          CONFIG.canvas.width;
+        const natH =
+          (bgVideo && bgVideo.videoHeight) ||
+          (bgImg && bgImg.naturalHeight) ||
+          CONFIG.canvas.height;
+
+        const scale = Math.min(wrapW / natW, wrapH / natH);
+        lastScale = scale;
+
+        const contentW = natW * scale;
+        const contentH = natH * scale;
+        const offsetX = (wrapW - contentW) / 2;
+        const offsetY = (wrapH - contentH) / 2;
+
+        if (scratchCanvas) {
+          scratchCanvas.style.left = `${offsetX}px`;
+          scratchCanvas.style.top = `${offsetY}px`;
+          scratchCanvas.style.width = `${contentW}px`;
+          scratchCanvas.style.height = `${contentH}px`;
+        }
+
+        for (const key in CONFIG.fields) {
+          const cfg = CONFIG.fields[key];
+          const el = fields[key];
+          if (!el) continue;
+
+          el.style.left = `${offsetX + cfg.x * scale}px`;
+          el.style.top = `${offsetY + cfg.y * scale}px`;
+          el.style.transform = "translate(-50%, -50%)";
+          el.style.width = `${cfg.boxWidth * scale}px`;
+          el.style.height = `${cfg.boxHeight * scale}px`;
+
+          const fontKey = cfg.fontKey || CONFIG.defaultFontKey;
+          el.style.fontFamily = CONFIG.fonts[fontKey] || "Arial, sans-serif";
+          el.style.fontSize = `${cfg.fontSize * scale}px`;
+          el.style.fontWeight = String(cfg.fontWeight ?? 400);
+          el.style.textAlign = cfg.align || "center";
+
+          const tf =
+            (CONFIG.textTransform?.fields && CONFIG.textTransform.fields[key]) ||
+            CONFIG.textTransform?.default ||
+            "uppercase";
+          el.style.textTransform = tf;
+
+          el.style.display = "flex";
+          el.style.alignItems = "center";
+          el.style.justifyContent =
+            el.style.textAlign === "left"
+              ? "flex-start"
+              : el.style.textAlign === "right"
+              ? "flex-end"
+              : "center";
+
+          if (key === "message") {
+            el.style.lineHeight = String(CONFIG.ui.messageLineHeight || 1.15);
+            el.style.display = "-webkit-box";
+            el.style.webkitBoxOrient = "vertical";
+            el.style.webkitLineClamp = String(CONFIG.ui.messageMaxLines || 2);
+            el.style.overflow = "hidden";
+          } else {
+            el.style.lineHeight = "normal";
+            el.style.webkitLineClamp = "";
+            el.style.webkitBoxOrient = "";
+            el.style.overflow = "hidden";
+          }
         }
       }
-      for (const key in state) {
-        state[key] = (params.get(key) || '').trim();
-      }
-    }
 
-    function applyFieldLayout() {
-      if (!card) return;
-
-      const wrapRect = card.getBoundingClientRect();
-      const wrapW = wrapRect.width;
-      const wrapH = wrapRect.height;
-
-      const natW = (bgVideo && bgVideo.videoWidth) || (bgImg && bgImg.naturalWidth) || CONFIG.canvas.width;
-      const natH = (bgVideo && bgVideo.videoHeight) || (bgImg && bgImg.naturalHeight) || CONFIG.canvas.height;
-
-      const scale = Math.min(wrapW / natW, wrapH / natH);
-      lastScale = scale;
-
-      const contentW = natW * scale;
-      const contentH = natH * scale;
-      const offsetX = (wrapW - contentW) / 2;
-      const offsetY = (wrapH - contentH) / 2;
-
-      if (scratchCanvas) {
-        scratchCanvas.style.left = offsetX + 'px';
-        scratchCanvas.style.top = offsetY + 'px';
-        scratchCanvas.style.width = contentW + 'px';
-        scratchCanvas.style.height = contentH + 'px';
-      }
-
-      for (const key in CONFIG.fields) {
-        const cfg = CONFIG.fields[key];
-        const el = fields[key];
-        if (!el) continue;
-
-        el.style.left = (offsetX + cfg.x * scale) + 'px';
-        el.style.top  = (offsetY + cfg.y * scale) + 'px';
-        el.style.transform = 'translate(-50%, -50%)';
-        el.style.width = (cfg.boxWidth * scale) + 'px';
-        el.style.height = (cfg.boxHeight * scale) + 'px';
-
-        const fontKey = cfg.fontKey || CONFIG.defaultFontKey;
-        el.style.fontFamily = CONFIG.fonts[fontKey] || 'Arial, sans-serif';
-        el.style.fontSize = (cfg.fontSize * scale) + 'px';
-        el.style.fontWeight = String(cfg.fontWeight ?? 400);
-        el.style.textAlign = cfg.align || 'center';
-
-        const tf = (CONFIG.textTransform?.fields && CONFIG.textTransform.fields[key])
-          ? CONFIG.textTransform.fields[key]
-          : (CONFIG.textTransform?.default || 'uppercase');
-        el.style.textTransform = tf;
-
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.justifyContent = (el.style.textAlign === 'left') ? 'flex-start' : (el.style.textAlign === 'right') ? 'flex-end' : 'center';
-
-        if (key === 'message') {
-          el.style.lineHeight = String(CONFIG.ui.messageLineHeight || 1.15);
-          el.style.display = '-webkit-box';
-          el.style.webkitBoxOrient = 'vertical';
-          el.style.webkitLineClamp = String(CONFIG.ui.messageMaxLines || 2);
-          el.style.overflow = 'hidden';
-        } else {
-          el.style.lineHeight = 'normal';
-          el.style.webkitLineClamp = '';
-          el.style.webkitBoxOrient = '';
-          el.style.overflow = 'hidden';
+      function resetTextStyles() {
+        for (const key in CONFIG.fields) {
+          const el = fields[key];
+          const cfg = CONFIG.fields[key];
+          if (!el) continue;
+          el.style.fontSize = `${cfg.fontSize * lastScale}px`;
         }
       }
-    }
 
-    function resetTextStyles() {
-      for (const key in CONFIG.fields) {
-        const el = fields[key];
-        const cfg = CONFIG.fields[key];
-        if (!el) continue;
-        el.style.fontSize = (cfg.fontSize * lastScale) + 'px';
-      }
-    }
+      function autoShrink(el, minSize) {
+        if (!el) return;
 
-    function autoShrink(el, minSize) {
-      if (!el) return;
-      
-      const maxHeight = el.offsetHeight;
-      let size = parseFloat(getComputedStyle(el).fontSize);
-      const min = Math.max(8, Number(minSize || 10) * lastScale);
-      let guard = 250;
-      
-      while ((el.scrollHeight > maxHeight || el.scrollWidth > el.offsetWidth) && size > min && guard-- > 0) {
-        size -= 1;
-        el.style.fontSize = size + 'px';
-      }
-    }
+        const maxHeight = el.offsetHeight;
+        let size = parseFloat(getComputedStyle(el).fontSize);
+        const min = Math.max(8, Number(minSize || 10) * lastScale);
+        let guard = 250;
 
-    function applyStateToFields() {
-      resetTextStyles();
-      for (const key in fields) {
-        if (fields[key]) {
-          fields[key].textContent = state[key] || '';
+        while (
+          (el.scrollHeight > maxHeight || el.scrollWidth > el.offsetWidth) &&
+          size > min &&
+          guard-- > 0
+        ) {
+          size -= 1;
+          el.style.fontSize = `${size}px`;
         }
       }
-      for (const key in fields) {
-        if (fields[key]) {
+
+      function applyStateToFields() {
+        resetTextStyles();
+
+        for (const key in fields) {
+          if (!fields[key]) continue;
+          fields[key].textContent = state[key] || "";
+        }
+
+        for (const key in fields) {
+          if (!fields[key]) continue;
           autoShrink(fields[key], CONFIG.minFontSize[key]);
         }
       }
-    }
 
-    function showEditor() {
-      editor.classList.add('active');
-      view.classList.remove('active');
-      loadingWrap.classList.remove('active');
-      if (scratchCanvas) scratchCanvas.style.display = 'none';
-      
-      // Clean up scratch listeners if they exist
-      if (scratchCleanup) {
-        scratchCleanup();
-        scratchCleanup = null;
-      }
-    }
-
-    async function showPreview() {
-      await runWithLoader({ message: 'Loading your ticket…', waitForVideo: true });
-
-      editor.classList.remove('active');
-      view.classList.add('active');
-
-      if (scratchCanvas) scratchCanvas.style.display = 'none';
-      if (actions) actions.style.display = 'flex';
-      if (instructions) instructions.textContent = 'Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.';
-
-      renderTicket();
-      renderTicketAfterFonts();
-    }
-
-    async function showReveal() {
-      await runWithLoader({ message: 'Loading your ticket…', waitForVideo: true });
-
-      editor.classList.remove('active');
-      view.classList.add('active');
-
-      if (actions) actions.style.display = 'none';
-      if (instructions) instructions.textContent = '✨ Scratch to reveal your surprise! ✨';
-      
-      for (const key in fields) {
-        if (fields[key]) fields[key].style.visibility = 'hidden';
-      }
-      
-      if (scratchCanvas) scratchCanvas.style.display = 'block';
-
-      renderTicket();
-      renderTicketAfterFonts();
-    }
-
-    function initScratch() {
-      const canvas = scratchCanvas;
-      if (!canvas) return;
-      
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) return;
-      
-      const overlay = new Image();
-      overlay.crossOrigin = 'anonymous';
-      overlay.src = withCacheBust(CONFIG.images.scratchOverlay);
-
-      overlay.onload = () => {
-        canvas.width = overlay.width;
-        canvas.height = overlay.height;
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(overlay, 0, 0);
-
-        setTimeout(() => {
-          for (const key in fields) {
-            if (fields[key]) fields[key].style.visibility = 'visible';
-          }
-        }, Number(CONFIG.reveal?.textDelayMs || 150));
-      };
-
-      overlay.onerror = () => {
-        console.error('Failed to load scratch overlay');
-        for (const key in fields) {
-          if (fields[key]) fields[key].style.visibility = 'visible';
-        }
-      };
-
-      let scratching = false;
-      let last = null;
-
-      function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+      function renderTicket() {
+        applyFieldLayout();
+        applyStateToFields();
       }
 
-      function eraseStroke(pos) {
-        const size = Number(CONFIG.scratch?.brushSize || 120);
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = size;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        if (!last) {
-          ctx.beginPath();
-          ctx.moveTo(pos.x, pos.y);
-          ctx.lineTo(pos.x + 0.01, pos.y + 0.01);
-          ctx.stroke();
-          last = pos;
-          return;
-        }
-        ctx.beginPath();
-        ctx.moveTo(last.x, last.y);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
-        last = pos;
+      function renderTicketAfterFonts() {
+        waitForFonts()
+          .then(() => {
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => {
+                applyFieldLayout();
+                applyStateToFields();
+              })
+            );
+          })
+          .catch((err) => console.warn("Font rendering warning:", err));
       }
 
-      function eraseCircle(pos) {
-        const radius = Number(CONFIG.scratch?.brushSize || 120) / 2;
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
-        ctx.fill();
+      /* ---------- LOADER FLOW ---------- */
+      function showLoading(msg) {
+        if (loadingText && msg) loadingText.textContent = msg;
+        loadingWrap.classList.add("active");
+        editor.classList.remove("active");
+        view.classList.remove("active");
       }
 
-      function eraseAt(e) {
-        const pos = getPos(e);
-        const mode = String(CONFIG.scratch?.brushMode || 'stroke').toLowerCase();
-        if (mode === 'circle') eraseCircle(pos);
-        else eraseStroke(pos);
+      function hideLoading() {
+        loadingWrap.classList.remove("active");
       }
 
-      const handleDown = (e) => { scratching = true; last = null; eraseAt(e); };
-      const handleUp = () => { scratching = false; last = null; };
-      const handleLeave = () => { scratching = false; last = null; };
-      const handleMove = (e) => { if (!scratching) return; eraseAt(e); };
+      function waitForVideoFirstFrame(timeoutMs) {
+        return new Promise((resolve) => {
+          if (!bgVideo) return resolve(false);
 
-      canvas.addEventListener('pointerdown', handleDown);
-      canvas.addEventListener('pointerup', handleUp);
-      canvas.addEventListener('pointerleave', handleLeave);
-      canvas.addEventListener('pointermove', handleMove);
+          let done = false;
 
-      // Return cleanup function
-      scratchCleanup = () => {
-        canvas.removeEventListener('pointerdown', handleDown);
-        canvas.removeEventListener('pointerup', handleUp);
-        canvas.removeEventListener('pointerleave', handleLeave);
-        canvas.removeEventListener('pointermove', handleMove);
-      };
-    }
+          const cleanup = () => {
+            bgVideo.removeEventListener("loadeddata", finish);
+            bgVideo.removeEventListener("canplay", finish);
+            bgVideo.removeEventListener("error", fail);
+          };
 
-    // Main boot function - now properly async
-    (async function boot() {
-      try {
-        applySocialMetaFromConfig();
-        ensureGoogleFontsLink();
-        setDebugMode(!isReveal && CONFIG.debug);
+          const finish = () => {
+            if (done) return;
+            done = true;
+            cleanup();
+            resolve(true);
+          };
 
-        if (inputs.message) {
-          inputs.message.maxLength = Number(CONFIG.ui.messageMaxChars || 140);
-          inputs.message.addEventListener('input', updateMessageCounter);
-          updateMessageCounter();
-        }
+          const fail = () => {
+            if (done) return;
+            done = true;
+            cleanup();
+            resolve(false);
+          };
 
-        // Video/fallback management with improved state handling
-        let videoFailed = false;
-        
-        if (CONFIG.images.poster && bgVideo) {
-          bgVideo.setAttribute('poster', withCacheBust(CONFIG.images.poster));
-        }
+          if (bgVideo.readyState >= 2) return resolve(true);
 
-        if (bgImg) {
-          bgImg.style.display = 'none';
-          bgImg.removeAttribute('src');
-        }
-
-        if (bgVideo) {
-          bgVideo.style.display = 'block';
-          bgVideo.pause();
-          bgVideo.removeAttribute('src');
-          bgVideo.load();
-          bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
-          bgVideo.load();
-        }
-
-        function armFallback() {
-          if (videoFailed || !bgVideo || !bgImg) return;
-          videoFailed = true;
-          bgVideo.style.display = 'none';
-          bgImg.style.display = 'block';
-          bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
-        }
-
-        if (bgVideo) {
-          bgVideo.addEventListener('error', armFallback);
-
-          bgVideo.addEventListener('loadedmetadata', () => {
-            if (!videoFailed) {
-              applyFieldLayout();
-              if (view.classList.contains('active')) renderTicketAfterFonts();
-            }
-          });
-          
-          bgVideo.addEventListener('loadeddata', () => {
-            if (!videoFailed && bgImg && bgVideo) {
-              bgImg.style.display = 'none';
-              bgVideo.style.display = 'block';
-              applyFieldLayout();
-              if (view.classList.contains('active')) renderTicketAfterFonts();
-            }
-          });
+          bgVideo.addEventListener("loadeddata", finish, { once: true });
+          bgVideo.addEventListener("canplay", finish, { once: true });
+          bgVideo.addEventListener("error", fail, { once: true });
 
           setTimeout(() => {
-            if (bgVideo.readyState < 2) armFallback();
-          }, 2500);
-        }
-
-        // Responsive layout
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(() => {
-            applyFieldLayout();
-            if (view.classList.contains('active')) {
-              renderTicket();
-              renderTicketAfterFonts();
+            if (!done) {
+              cleanup();
+              resolve(false);
             }
-          }, 100);
+          }, Number(timeoutMs || 1200));
         });
+      }
 
-        // Mode-specific initialization
-        if (isReveal) {
-          loadStateFromParams();
-          await showReveal();
-          applyStateToFields();
-          initScratch();
-        } else {
-          showEditor();
+      async function runWithLoader({ message, waitForVideo }) {
+        const minMs = Number(CONFIG.loader?.minMs ?? 250);
+        const maxMs = Number(CONFIG.loader?.maxMs ?? 1200);
+        const start = performance.now();
+
+        showLoading(message || "Loading your ticket…");
+        await new Promise((r) => requestAnimationFrame(r));
+
+        applyFieldLayout();
+        applyStateToFields();
+
+        if (waitForVideo) await waitForVideoFirstFrame(maxMs);
+        else await waitMs(Math.min(150, maxMs));
+
+        const elapsed = performance.now() - start;
+        if (elapsed < minMs) await waitMs(minMs - elapsed);
+
+        hideLoading();
+      }
+
+      /* ---------- VIEWS ---------- */
+      function showEditor() {
+        editor.classList.add("active");
+        view.classList.remove("active");
+        loadingWrap.classList.remove("active");
+
+        if (scratchCanvas) scratchCanvas.style.display = "none";
+
+        // cleanup scratch listeners
+        if (scratchCleanup) {
+          scratchCleanup();
+          scratchCleanup = null;
+        }
+      }
+
+      async function showPreview() {
+        await runWithLoader({ message: "Loading your ticket…", waitForVideo: true });
+
+        editor.classList.remove("active");
+        view.classList.add("active");
+
+        if (scratchCanvas) scratchCanvas.style.display = "none";
+        if (actions) actions.style.display = "flex";
+        if (instructions) {
+          instructions.textContent =
+            "Preview your ticket ✨ If anything looks off, tap Back to Edit to fix it.";
         }
 
-        // Button handlers
-        const previewBtn = document.getElementById('previewBtn');
-        if (previewBtn) {
-          previewBtn.addEventListener('click', async () => {
+        renderTicket();
+        renderTicketAfterFonts();
+      }
+
+      async function showReveal() {
+        await runWithLoader({ message: "Loading your ticket…", waitForVideo: true });
+
+        editor.classList.remove("active");
+        view.classList.add("active");
+
+        if (actions) actions.style.display = "none";
+        if (instructions) instructions.textContent = "✨ Scratch to reveal your surprise! ✨";
+
+        for (const key in fields) {
+          if (fields[key]) fields[key].style.visibility = "hidden";
+        }
+
+        if (scratchCanvas) scratchCanvas.style.display = "block";
+
+        renderTicket();
+        renderTicketAfterFonts();
+      }
+
+      /* ---------- SCRATCH ---------- */
+      function initScratch() {
+        const canvas = scratchCanvas;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return;
+
+        const overlay = new Image();
+        overlay.crossOrigin = "anonymous";
+        overlay.src = withCacheBust(CONFIG.images.scratchOverlay);
+
+        overlay.onload = () => {
+          canvas.width = overlay.width;
+          canvas.height = overlay.height;
+
+          ctx.globalCompositeOperation = "source-over";
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(overlay, 0, 0);
+
+          setTimeout(() => {
+            for (const key in fields) {
+              if (fields[key]) fields[key].style.visibility = "visible";
+            }
+          }, Number(CONFIG.reveal?.textDelayMs || 150));
+        };
+
+        overlay.onerror = () => {
+          console.error("Failed to load scratch overlay");
+          for (const key in fields) {
+            if (fields[key]) fields[key].style.visibility = "visible";
+          }
+        };
+
+        let scratching = false;
+        let last = null;
+
+        function getPos(e) {
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const scaleY = canvas.height / rect.height;
+          return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY,
+          };
+        }
+
+        function eraseStroke(pos) {
+          const size = Number(CONFIG.scratch?.brushSize || 120);
+
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.lineWidth = size;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          if (!last) {
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            ctx.lineTo(pos.x + 0.01, pos.y + 0.01);
+            ctx.stroke();
+            last = pos;
+            return;
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(last.x, last.y);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+          last = pos;
+        }
+
+        function eraseCircle(pos) {
+          const radius = Number(CONFIG.scratch?.brushSize || 120) / 2;
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        function eraseAt(e) {
+          const pos = getPos(e);
+          const mode = String(CONFIG.scratch?.brushMode || "stroke").toLowerCase();
+          if (mode === "circle") eraseCircle(pos);
+          else eraseStroke(pos);
+        }
+
+        const handleDown = (e) => {
+          scratching = true;
+          last = null;
+          eraseAt(e);
+        };
+        const handleUp = () => {
+          scratching = false;
+          last = null;
+        };
+        const handleLeave = () => {
+          scratching = false;
+          last = null;
+        };
+        const handleMove = (e) => {
+          if (!scratching) return;
+          eraseAt(e);
+        };
+
+        canvas.addEventListener("pointerdown", handleDown);
+        canvas.addEventListener("pointerup", handleUp);
+        canvas.addEventListener("pointerleave", handleLeave);
+        canvas.addEventListener("pointermove", handleMove);
+
+        scratchCleanup = () => {
+          canvas.removeEventListener("pointerdown", handleDown);
+          canvas.removeEventListener("pointerup", handleUp);
+          canvas.removeEventListener("pointerleave", handleLeave);
+          canvas.removeEventListener("pointermove", handleMove);
+        };
+      }
+
+      /* ---------- BOOT ---------- */
+      (async function boot() {
+        try {
+          applySocialMetaFromConfig();
+          ensureGoogleFontsLink();
+          setDebugMode(!isReveal && CONFIG.debug);
+
+          if (inputs.message) {
+            inputs.message.maxLength = Number(CONFIG.ui.messageMaxChars || 140);
+            inputs.message.addEventListener("input", updateMessageCounter);
+            updateMessageCounter();
+          }
+
+          // Video/fallback handling
+          let videoFailed = false;
+
+          if (CONFIG.images.poster && bgVideo) {
+            bgVideo.setAttribute("poster", withCacheBust(CONFIG.images.poster));
+          }
+
+          if (bgImg) {
+            bgImg.style.display = "none";
+            bgImg.removeAttribute("src");
+          }
+
+          if (bgVideo) {
+            bgVideo.style.display = "block";
+            bgVideo.pause();
+            bgVideo.removeAttribute("src");
+            bgVideo.load();
+            bgVideo.src = withCacheBust(CONFIG.images.backgroundVideo);
+            bgVideo.load();
+          }
+
+          function armFallback() {
+            if (videoFailed || !bgVideo || !bgImg) return;
+            videoFailed = true;
+            bgVideo.style.display = "none";
+            bgImg.style.display = "block";
+            bgImg.src = withCacheBust(CONFIG.images.backgroundFallback);
+          }
+
+          if (bgVideo) {
+            bgVideo.addEventListener("error", armFallback);
+
+            bgVideo.addEventListener("loadedmetadata", () => {
+              if (videoFailed) return;
+              applyFieldLayout();
+              if (view.classList.contains("active")) renderTicketAfterFonts();
+            });
+
+            bgVideo.addEventListener("loadeddata", () => {
+              if (videoFailed) return;
+              if (bgImg) bgImg.style.display = "none";
+              bgVideo.style.display = "block";
+              applyFieldLayout();
+              if (view.classList.contains("active")) renderTicketAfterFonts();
+            });
+
+            setTimeout(() => {
+              if (bgVideo.readyState < 2) armFallback();
+            }, 2500);
+          }
+
+          // Responsive layout
+          let resizeTimeout;
+          window.addEventListener("resize", () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+              applyFieldLayout();
+              if (view.classList.contains("active")) {
+                renderTicket();
+                renderTicketAfterFonts();
+              }
+            }, 100);
+          });
+
+          // Mode init
+          if (isReveal) {
+            loadStateFromParams();
+            await showReveal();
+            applyStateToFields();
+            initScratch();
+          } else {
+            showEditor();
+          }
+
+          // Buttons
+          const previewBtn = document.getElementById("previewBtn");
+          previewBtn?.addEventListener("click", async () => {
             try {
               pullInputsToState();
               await showPreview();
             } catch (err) {
-              console.error('Preview error:', err);
-              if (fatalError) fatalError.style.display = 'block';
+              console.error("Preview error:", err);
+              if (fatalError) fatalError.style.display = "block";
             }
           });
-        }
 
-        const backBtn = document.getElementById('backBtn');
-        if (backBtn) {
-          backBtn.addEventListener('click', () => {
+          const backBtn = document.getElementById("backBtn");
+          backBtn?.addEventListener("click", () => {
             pushStateToInputs();
             showEditor();
           });
-        }
 
-        const generateBtn = document.getElementById('generateBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const linkStatus = document.getElementById('linkStatus');
-        let lastGeneratedLink = '';
+          const generateBtn = document.getElementById("generateBtn");
+          const copyBtn = document.getElementById("copyBtn");
+          const linkStatus = document.getElementById("linkStatus");
+          let lastGeneratedLink = "";
 
-        if (generateBtn) {
-          generateBtn.addEventListener('click', () => {
+          generateBtn?.addEventListener("click", () => {
             try {
-              const base = (CONFIG.share && typeof CONFIG.share.baseUrl === 'string' && CONFIG.share.baseUrl.trim())
-                ? CONFIG.share.baseUrl.trim()
-                : window.location.href.split('?')[0];
+              const base =
+                CONFIG.share?.baseUrl && typeof CONFIG.share.baseUrl === "string" && CONFIG.share.baseUrl.trim()
+                  ? CONFIG.share.baseUrl.trim()
+                  : window.location.href.split("?")[0];
 
               const url = new URL(base);
-              url.searchParams.set('mode', 'reveal');
+              url.searchParams.set("mode", "reveal");
+
               const packed = encodeState(state);
-              if (packed) url.searchParams.set('d', packed);
+              if (packed) url.searchParams.set("d", packed);
+
               lastGeneratedLink = url.toString();
 
-              if (linkStatus) linkStatus.style.display = 'block';
-              if (copyBtn) copyBtn.style.display = 'block';
+              if (linkStatus) linkStatus.style.display = "block";
+              if (copyBtn) copyBtn.style.display = "block";
 
-              requestAnimationFrame(() => { 
-                applyFieldLayout(); 
-                applyStateToFields(); 
+              requestAnimationFrame(() => {
+                applyFieldLayout();
+                applyStateToFields();
               });
             } catch (err) {
-              console.error('Generate link error:', err);
+              console.error("Generate link error:", err);
             }
           });
-        }
 
-        if (copyBtn) {
-          copyBtn.addEventListener('click', async () => {
+          copyBtn?.addEventListener("click", async () => {
             if (!lastGeneratedLink) return;
-            
+
             const setCopied = () => {
-              copyBtn.textContent = 'Copied! ✓';
-              setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+              copyBtn.textContent = "Copied! ✓";
+              setTimeout(() => (copyBtn.textContent = "Copy Link"), 1500);
             };
 
             try {
-              if (navigator.clipboard && navigator.clipboard.writeText) {
+              if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(lastGeneratedLink);
                 setCopied();
                 return;
               }
             } catch (err) {
-              console.warn('Clipboard API failed, using fallback:', err);
+              console.warn("Clipboard API failed, using fallback:", err);
             }
 
-            // Fallback for older browsers or non-HTTPS contexts
-            const temp = document.createElement('textarea');
+            const temp = document.createElement("textarea");
             temp.value = lastGeneratedLink;
-            temp.setAttribute('readonly', '');
-            temp.style.position = 'fixed';
-            temp.style.left = '-9999px';
+            temp.setAttribute("readonly", "");
+            temp.style.position = "fixed";
+            temp.style.left = "-9999px";
             document.body.appendChild(temp);
             temp.select();
-            try { 
-              document.execCommand('copy'); 
+
+            try {
+              document.execCommand("copy");
               setCopied();
             } catch (err) {
-              console.error('Copy fallback failed:', err);
+              console.error("Copy fallback failed:", err);
             }
+
             document.body.removeChild(temp);
           });
+        } catch (err) {
+          console.error("Boot error:", err);
+          if (fatalError) fatalError.style.display = "block";
         }
-
-      } catch (err) {
-        console.error('Boot error:', err);
-        if (fatalError) fatalError.style.display = 'block';
-      }
-    })();
-  </script>
-</body>
-</html
+      })();
+    </script>
+  </body>
+</html>
